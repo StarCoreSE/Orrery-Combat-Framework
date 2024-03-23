@@ -198,9 +198,9 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles.GuidanceHelpers
         {
             if (currentStage == null || target == null)
                 return false;
-            if (projectile.Firer == 0)
+            if (projectile.Firer == null)
                 return true;
-            IMyEntity firer = MyAPIGateway.Entities.GetEntityById(projectile.Firer);
+            IMyEntity firer = projectile.Firer;
             if (firer == null || !(firer is IMyCubeBlock))
                 return true;
 

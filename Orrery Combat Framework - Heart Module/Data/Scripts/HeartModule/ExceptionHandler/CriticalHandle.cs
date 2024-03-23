@@ -32,8 +32,8 @@ namespace Heart_Module.Data.Scripts.HeartModule.ExceptionHandler
                 else
                 {
                     //throw Exception;
+                    HeartLoad.I.UnloadDataConditional();
                     MyAPIGateway.Session.Unload(); // This might cause improver unloading
-                    MyAPIGateway.Session.UnloadDataComponents();
                 }
 
             }

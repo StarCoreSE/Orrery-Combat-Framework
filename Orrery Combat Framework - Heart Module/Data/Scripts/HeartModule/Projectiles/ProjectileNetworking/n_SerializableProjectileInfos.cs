@@ -5,6 +5,7 @@ using ProtoBuf;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRageMath;
 using YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding;
@@ -89,7 +90,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles.ProjectileNetworking
                 if (detailLevel != ProjectileDetailLevel.Minimal)
                 {
                     DefinitionId[i] = projectiles[i].DefinitionId;
-                    FirerEntityId[i] = projectiles[i].Firer;
+                    FirerEntityId[i] = projectiles[i].Firer.EntityId;
                     if (detailLevel != ProjectileDetailLevel.NoGuidance)
                     {
                         TargetEntityId[i] = projectiles[i].Guidance?.GetTarget()?.EntityId;
@@ -175,7 +176,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles.ProjectileNetworking
                 DefinitionId[index],
                 PlayerRelativePosition(index) + MyAPIGateway.Session.Player.Character.GetPosition(),
                 Direction(index),
-                FirerEntityId[index],
+                (MyEntity) MyAPIGateway.Entities.GetEntityById(FirerEntityId[index]),
                 ((IMyCubeBlock)MyAPIGateway.Entities.GetEntityById(FirerEntityId[index]))?.CubeGrid.LinearVelocity ?? Vector3D.Zero
                 )
             {
@@ -222,7 +223,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles.ProjectileNetworking
 
             for (int i = 0; i < projectiles.Count; i++)
             {
-                FirerEntityId[i] = projectiles[i].Firer;
+                FirerEntityId[i] = projectiles[i].Firer.EntityId;
                 UniqueProjectileId[i] = projectiles[i].Id;
                 directionX[i] = (float)projectiles[i].Direction.X;
                 directionY[i] = (float)projectiles[i].Direction.Y;
@@ -297,7 +298,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles.ProjectileNetworking
                 weapon.Magazines.SelectedAmmoId,
                 weapon.CalcMuzzleMatrix(weapon.NextMuzzleIdx).Translation,
                 Direction(index),
-                FirerEntityId[index],
+                (MyEntity) MyAPIGateway.Entities.GetEntityById(FirerEntityId[index]),
                 weapon?.SorterWep?.CubeGrid.LinearVelocity ?? Vector3D.Zero
                 )
             {

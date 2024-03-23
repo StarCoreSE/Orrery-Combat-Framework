@@ -21,6 +21,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Utility
             ["debug.fillammo"] = new Command("HeartMod.Debug", "Fills all magazines on your current grid.", (message) => I.FillGridWeapons()),
             ["debug.reloadammo"] = new Command("HeartMod.Debug", "Forces all weapons on your current grid to reload.", (message) => I.ReloadGridWeapons()),
             ["debug.reloaddefs"] = new Command("HeartMod.Debug", "Clears and refreshes all weapon definitions.", (message) => { HeartLoad.ResetDefinitions(); MyAPIGateway.Utilities.ShowMessage("[OCF]", "All definitions cleared. Good luck fixing the bug!"); }),
+            ["degraded"] = new Command("HeartMod", "Enter degraded mode for [arg1] seconds.", (message) => I.EnterDegradedMode(message)),
         };
 
         private void ShowHelp()
@@ -99,15 +100,23 @@ namespace Heart_Module.Data.Scripts.HeartModule.Utility
                     //weapon.Magazines.UpdateReload();
                     ct++;
                 }
-                MyAPIGateway.Utilities.ShowMessage($"[HeartMod.Debug]", $"Force-reloaded {ct} weapons.");
+                MyAPIGateway.Utilities.ShowMessage("[HeartMod.Debug]", $"Force-reloaded {ct} weapons.");
             }
             else
             {
-                MyAPIGateway.Utilities.ShowMessage($"[HeartMod.Debug]", "No grid found!");
+                MyAPIGateway.Utilities.ShowMessage("[HeartMod.Debug]", "No grid found!");
             }
         }
 
-
+        private void EnterDegradedMode(string[] message)
+        {
+            HeartData.I.DegradedMode = true;
+            float seconds = 10;
+            if (message.Length > 1)
+                float.TryParse(message[1], out seconds);
+            MyAPIGateway.Utilities.ShowMessage("[HeartMod]", $"Entering client degraded mode for {seconds} seconds!");
+            HeartData.I.DegradedModeTicks = (int)(seconds * 60);
+        }
 
 
 
@@ -127,19 +136,32 @@ namespace Heart_Module.Data.Scripts.HeartModule.Utility
 
         private void Command_MessageEnteredSender(ulong sender, string messageText, ref bool sendToOthers)
         {
-            // Only register for commands
-            if (messageText.Length == 0 || !messageText.ToLower().StartsWith("/ocf"))
-                return;
+            try
+            {
+                // Only register for commands
+                if (messageText.Length == 0 || !messageText.ToLower().StartsWith("/ocf"))
+                    return;
 
-            sendToOthers = false;
+                sendToOthers = false;
 
-            string[] parts = messageText.Substring(5).Split(' '); // Convert commands to be more parseable
+                string[] parts = messageText.Substring(4).Trim(' ').Split(' '); // Convert commands to be more parseable
 
-            // Really basic command handler
-            if (commands.ContainsKey(parts[0].ToLower()))
-                commands[parts[0].ToLower()].action.Invoke(parts);
-            else
-                MyAPIGateway.Utilities.ShowMessage("[OCF]", $"Unrecognized command \"{messageText}\" ({sender})");
+                if (parts[0] == "")
+                {
+                    ShowHelp();
+                    return;
+                }
+
+                // Really basic command handler
+                if (commands.ContainsKey(parts[0].ToLower()))
+                    commands[parts[0].ToLower()].action.Invoke(parts);
+                else
+                    MyAPIGateway.Utilities.ShowMessage("[OCF]", $"Unrecognized command \"{messageText}\" ({sender})");
+            }
+            catch (Exception ex)
+            {
+                SoftHandle.RaiseException(ex, typeof(CommandHandler));
+            }
         }
 
         public void Close()

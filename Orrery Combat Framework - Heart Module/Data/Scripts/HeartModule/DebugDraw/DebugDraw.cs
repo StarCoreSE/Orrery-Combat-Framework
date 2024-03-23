@@ -88,29 +88,33 @@ namespace Heart_Module.Data.Scripts.HeartModule.Debug
 
         public override void Draw()
         {
-            foreach (var key in QueuedPoints.Keys.ToList())
+            try
             {
-                DrawPoint0(key, QueuedPoints[key].Item2);
+                foreach (var key in QueuedPoints.Keys.ToList())
+                {
+                    DrawPoint0(key, QueuedPoints[key].Item2);
 
-                if (DateTime.UtcNow.Ticks > QueuedPoints[key].Item1)
-                    QueuedPoints.Remove(key);
+                    if (DateTime.UtcNow.Ticks > QueuedPoints[key].Item1)
+                        QueuedPoints.Remove(key);
+                }
+
+                foreach (var key in QueuedGridPoints.Keys.ToList())
+                {
+                    DrawGridPoint0(key, QueuedGridPoints[key].Item3, QueuedGridPoints[key].Item2);
+
+                    if (DateTime.UtcNow.Ticks > QueuedGridPoints[key].Item1)
+                        QueuedGridPoints.Remove(key);
+                }
+
+                foreach (var key in QueuedLinePoints.Keys.ToList())
+                {
+                    DrawLine0(key.Item1, key.Item2, QueuedLinePoints[key].Item2);
+
+                    if (DateTime.UtcNow.Ticks > QueuedLinePoints[key].Item1)
+                        QueuedLinePoints.Remove(key);
+                }
             }
-
-            foreach (var key in QueuedGridPoints.Keys.ToList())
-            {
-                DrawGridPoint0(key, QueuedGridPoints[key].Item3, QueuedGridPoints[key].Item2);
-
-                if (DateTime.UtcNow.Ticks > QueuedGridPoints[key].Item1)
-                    QueuedGridPoints.Remove(key);
-            }
-
-            foreach (var key in QueuedLinePoints.Keys.ToList())
-            {
-                DrawLine0(key.Item1, key.Item2, QueuedLinePoints[key].Item2);
-
-                if (DateTime.UtcNow.Ticks > QueuedLinePoints[key].Item1)
-                    QueuedLinePoints.Remove(key);
-            }
+            catch { } // Icky no error logging
         }
 
         private void DrawPoint0(Vector3D globalPos, Color color)

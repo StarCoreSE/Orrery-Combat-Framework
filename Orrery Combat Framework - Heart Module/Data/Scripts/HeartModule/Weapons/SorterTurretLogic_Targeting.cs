@@ -136,7 +136,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons
 
         public bool ShouldConsiderTarget(Projectile targetProjectile)
         {
-            if (!TargetProjectilesState || targetProjectile == null || targetProjectile.Firer == SorterWep.EntityId)
+            if (!TargetProjectilesState || targetProjectile == null || targetProjectile.Firer == SorterWep)
                 return false;
 
             if (Definition.Targeting.RetargetTime != 0 && !HasValidTarget() && targetProjectile == TargetProjectile)
@@ -144,7 +144,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons
 
             MyRelationsBetweenPlayerAndBlock relations = MyRelationsBetweenPlayerAndBlock.NoOwnership;
 
-            IMyEntity entity = MyAPIGateway.Entities.GetEntityById(targetProjectile.Firer);
+            IMyEntity entity = targetProjectile.Firer;
             if (entity is IMyCharacter)
                 relations = HeartUtils.GetRelationsBetweenGridAndPlayer(SorterWep.CubeGrid, ((IMyCharacter)entity).ControllerInfo?.ControllingIdentityId);
             else if (entity is IMyCubeBlock)

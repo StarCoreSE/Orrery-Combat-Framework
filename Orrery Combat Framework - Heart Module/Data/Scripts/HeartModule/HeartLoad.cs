@@ -19,13 +19,12 @@ namespace Heart_Module.Data.Scripts.HeartModule
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation, priority: int.MaxValue)]
     internal class HeartLoad : MySessionComponentBase
     {
-        private static HeartLoad I;
+        public static HeartLoad I;
 
         CriticalHandle handle;
         ApiSender apiSender;
         DefinitionReciever definitionReciever;
         CommandHandler commands;
-        int remainingDegradedModeTicks = 30;
 
         public override void LoadData()
         {
@@ -112,30 +111,30 @@ namespace Heart_Module.Data.Scripts.HeartModule
                 {
                     if (!HeartData.I.DegradedMode)
                     {
-                        if (remainingDegradedModeTicks >= 60) // Wait 300 ticks before engaging degraded mode
+                        if (HeartData.I.DegradedModeTicks >= 60) // Wait 300 ticks before engaging degraded mode
                         {
                             HeartData.I.DegradedMode = true;
                             if (MyAPIGateway.Session.IsServer)
-                                MyAPIGateway.Utilities.SendMessage("[OCF] Entering degraded mode!");
-                            MyAPIGateway.Utilities.ShowMessage("[OCF]", "Entering client degraded mode!");
-                            remainingDegradedModeTicks = 600;
+                                MyAPIGateway.Utilities.SendMessage("[OCF] Entering degraded mode for 10s!");
+                            MyAPIGateway.Utilities.ShowMessage("[OCF]", "Entering client degraded mode for 10s!");
+                            HeartData.I.DegradedModeTicks = 600;
                         }
                         else
-                            remainingDegradedModeTicks++;
+                            HeartData.I.DegradedModeTicks++;
                     }
                 }
                 else if (MyAPIGateway.Physics.SimulationRatio > 0.87)
                 {
-                    if (remainingDegradedModeTicks <= 0 && HeartData.I.DegradedMode)
+                    if (HeartData.I.DegradedModeTicks <= 0 && HeartData.I.DegradedMode)
                     {
                         HeartData.I.DegradedMode = false;
                         if (MyAPIGateway.Session.IsServer)
                             MyAPIGateway.Utilities.SendMessage("[OCF] Exiting degraded mode.");
                         MyAPIGateway.Utilities.ShowMessage("[OCF]", "Exiting client degraded mode.");
-                        remainingDegradedModeTicks = 0;
+                        HeartData.I.DegradedModeTicks = 0;
                     }
-                    else if (remainingDegradedModeTicks > 0)
-                        remainingDegradedModeTicks--;
+                    else if (HeartData.I.DegradedModeTicks > 0)
+                        HeartData.I.DegradedModeTicks--;
                 }
             }
             catch (Exception ex)
