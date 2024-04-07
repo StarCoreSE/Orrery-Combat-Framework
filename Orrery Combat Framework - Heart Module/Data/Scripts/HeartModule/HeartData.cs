@@ -24,6 +24,7 @@ namespace Heart_Module.Data.Scripts.HeartModule
         public ulong SteamId = 0;
         public List<IMyPlayer> Players = new List<IMyPlayer>();
         public bool DegradedMode = false;
+        public int DegradedModeTicks = 20;
         public Action<IMyCubeGrid> OnGridAdd = (a) => { };
         public Action<IMyCubeGrid> OnGridRemove = (a) => { };
         public GuiBlockCategoryHelper OrreryBlockCategory = new GuiBlockCategoryHelper("[Orrery Combat Framework]", "OrreryBlockCategory");

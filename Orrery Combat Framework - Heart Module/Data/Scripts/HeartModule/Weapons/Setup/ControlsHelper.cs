@@ -20,7 +20,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup
             ShootToggle.SupportsMultipleBlocks = true; // wether this control should be visible when multiple blocks are selected (as long as they all have this control).
                                                        // callbacks to determine if the control should be visible or not-grayed-out(Enabled) depending on whatever custom condition you want, given a block instance.
                                                        // optional, they both default to true.
-            Func<IMyTerminalBlock, bool> visibleFunc;
+            Func<IMyTerminalBlock, bool> visibleFunc; // TODO: This is causing *massive* performance load when using many many weapons.
             if (typeof(T) == typeof(SorterTurretLogic))
                 visibleFunc = (b) => HasTurretLogic(b) && (visible?.Invoke(b) ?? true);
             else

@@ -1,12 +1,17 @@
-﻿using Heart_Module.Data.Scripts.HeartModule.ErrorHandler;
+﻿using Heart_Module.Data.Scripts.HeartModule.Debug;
+using Heart_Module.Data.Scripts.HeartModule.ErrorHandler;
 using Heart_Module.Data.Scripts.HeartModule.Projectiles.GuidanceHelpers;
 using Heart_Module.Data.Scripts.HeartModule.Projectiles.StandardClasses;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRageMath;
+using static Sandbox.Engine.Physics.MyPhysics.CollisionLayers;
 
 namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
 {
@@ -22,7 +27,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
 
         public ProjectileGuidance Guidance;
         public bool IsHitscan { get; private set; } = false;
-        public long Firer = -1;
+        public MyEntity Firer = null;
         public Vector3D Position = Vector3D.Zero;
         public Vector3D Direction = Vector3D.Up;
         public float Velocity = 0;
@@ -79,7 +84,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             Id = projectile.Id;
             DefinitionId = projectile.DefinitionId.Value;
             Definition = ProjectileDefinitionManager.GetDefinition(projectile.DefinitionId.Value);
-            Firer = projectile.Firer.GetValueOrDefault(0);
+            Firer = (MyEntity) MyAPIGateway.Entities.GetEntityById(projectile.Firer.GetValueOrDefault(0));
             IsHitscan = Definition.PhysicalProjectile.IsHitscan;
             Health = Definition.PhysicalProjectile.Health;
             if (!IsHitscan)
@@ -90,7 +95,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             if (Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);
 
-            Definition.LiveMethods.OnSpawn?.Invoke(Id, (MyEntity)MyAPIGateway.Entities.GetEntityById(Firer));
+            Definition.LiveMethods.OnSpawn?.Invoke(Id, Firer);
             UpdateFromSerializable(projectile);
         }
 
@@ -101,11 +106,11 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
         /// <param name="Position"></param>
         /// <param name="Direction"></param>
         /// <param name="block"></param>
-        public Projectile(int DefinitionId, Vector3D Position, Vector3D Direction, IMyCubeBlock block) : this(DefinitionId, Position, Direction, block.EntityId, block.CubeGrid?.LinearVelocity ?? Vector3D.Zero)
+        public Projectile(int DefinitionId, Vector3D Position, Vector3D Direction, IMyCubeBlock block) : this(DefinitionId, Position, Direction, (MyEntity) block, block.CubeGrid?.LinearVelocity ?? Vector3D.Zero)
         {
         }
 
-        public Projectile(int DefinitionId, Vector3D Position, Vector3D Direction, long firer = 0, Vector3D InitialVelocity = new Vector3D())
+        public Projectile(int DefinitionId, Vector3D Position, Vector3D Direction, MyEntity firer = null, Vector3D InitialVelocity = new Vector3D())
         {
             if (!ProjectileDefinitionManager.HasDefinition(DefinitionId))
             {
@@ -141,13 +146,16 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             if (Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);
 
-            Definition.LiveMethods.OnSpawn?.Invoke(Id, (MyEntity)MyAPIGateway.Entities.GetEntityById(Firer));
+            Definition.LiveMethods.OnSpawn?.Invoke(Id, Firer);
         }
 
-        public void TickUpdate(float delta)
+        public void TickUpdate(float delta, HashSet<IMyEntity> entities = null)
         {
             if ((Definition.PhysicalProjectile.MaxTrajectory != -1 && Definition.PhysicalProjectile.MaxTrajectory < DistanceTravelled) || (Definition.PhysicalProjectile.MaxLifetime != -1 && Definition.PhysicalProjectile.MaxLifetime < Age))
                 QueueDispose();
+
+            if (QueuedDispose)
+                return;
 
             if (Guidance == null && Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);
@@ -157,7 +165,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             {
                 Guidance?.RunGuidance(delta);
 
-                CheckHits();
+                CheckHits(entities);
 
                 // Apply gravity as an acceleration
                 float gravityMultiplier = Definition.PhysicalProjectile.GravityInfluenceMultiplier;
@@ -205,7 +213,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
 
                 if (RemainingImpacts > 0)
                 {
-                    MaxBeamLength = CheckHits(); // Set visual beam length
+                    CheckHits(entities); // Set visual beam length
                     if (MaxBeamLength == -1)
                         MaxBeamLength = Definition.PhysicalProjectile.MaxTrajectory;
                 }
@@ -217,14 +225,14 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                 UpdateAudio();
         }
 
-        public float CheckHits()
+        public void CheckHits(HashSet<IMyEntity> entities)
         {
             if (NextMoveStep == Vector3D.Zero)
-                return -1;
+                return;
 
             double len = IsHitscan ? Definition.PhysicalProjectile.MaxTrajectory : Vector3D.Distance(Position, NextMoveStep);
-            double dist = -1;
 
+            // Run projectile collision checks
             if (MyAPIGateway.Session.IsServer && RemainingImpacts > 0 && Definition.Damage.DamageToProjectiles > 0)
             {
                 List<Projectile> hittableProjectiles = new List<Projectile>();
@@ -246,12 +254,12 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                     double? intersectDist = ray.Intersects(box);
                     if (intersectDist != null)
                     {
-                        dist = intersectDist.Value;
+                        MaxBeamLength = (float) intersectDist.Value;
                         projectile.Health -= Definition.Damage.DamageToProjectiles;
 
                         damageToProjectilesInAoE += Definition.Damage.DamageToProjectiles;
 
-                        Vector3D hitPos = Position + Direction * dist;
+                        Vector3D hitPos = Position + Direction * MaxBeamLength;
 
                         if (MyAPIGateway.Session.IsServer)
                             PlayImpactAudio(hitPos); // Audio is global
@@ -270,44 +278,111 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                             projectile.Health -= damageToProjectilesInAoE;
             }
 
-            if (RemainingImpacts > 0)
+            // Check if a raycast is needed, and if it is, perform a physics cast.
+            RayD travelLine = new RayD(Position, Direction);
+            double checkDistSq = (NextMoveStep - Position).LengthSquared();
+
+            foreach (var entity in entities)
             {
-                List<IHitInfo> intersects = new List<IHitInfo>();
-                MyAPIGateway.Physics.CastRay(Position, NextMoveStep, intersects);
+                double? dist = entity.WorldVolume.Intersects(travelLine); // This seems to be the cheapest form of line checking
+                if (!dist.HasValue || dist * dist > checkDistSq)
+                    continue;
 
-                foreach (var hitInfo in intersects)
-                {
-                    if (RemainingImpacts <= 0)
-                        break;
-
-                    if (hitInfo.HitEntity.EntityId == Firer)
-                        continue; // Skip firer
-
-                    dist = hitInfo.Fraction * len;
-
-                    if (MyAPIGateway.Session.IsServer)
-                    {
-                        if (hitInfo.HitEntity is IMyCubeGrid)
-                            DamageHandler.QueueEvent(new DamageEvent(hitInfo.HitEntity, DamageEvent.DamageEntType.Grid, this, hitInfo.Position, hitInfo.Normal, Position, NextMoveStep));
-                        else if (hitInfo.HitEntity is IMyCharacter)
-                            DamageHandler.QueueEvent(new DamageEvent(hitInfo.HitEntity, DamageEvent.DamageEntType.Character, this, hitInfo.Position, hitInfo.Normal, Position, NextMoveStep));
-                    }
-
-                    if (MyAPIGateway.Session.IsServer)
-                        PlayImpactAudio(hitInfo.Position); // Audio is global
-                    if (!MyAPIGateway.Utilities.IsDedicated)
-                        DrawImpactParticle(hitInfo.Position, hitInfo.Normal); // Visuals are clientside
-
-                    Definition.LiveMethods.OnImpact?.Invoke(Id, hitInfo.Position, Direction, (MyEntity)hitInfo.HitEntity);
-
-                    RemainingImpacts--;
-                }
+                PerformRaycastRecursive(len);
+                break;
             }
+
 
             if (RemainingImpacts <= 0)
                 QueueDispose();
+        }
 
-            return (float)dist;
+        private void PerformRaycastRecursive(double length)
+        {
+            MaxBeamLength = -1;
+
+            if (RemainingImpacts <= 0)
+                return;
+
+            BoundingSphereD sphere = new BoundingSphereD(Position, NextMoveStep.Length());
+            List<MyEntity> entities = new List<MyEntity>();
+            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref sphere, entities);
+            if (entities.Count == 0)
+                return;
+
+            LineD ray = new LineD(Position, NextMoveStep);
+            Vector3D normalDirection = (NextMoveStep - Position).Normalized();
+            double totalDist = (NextMoveStep - Position).Length();
+            List<MyLineSegmentOverlapResult<MyEntity>> results = new List<MyLineSegmentOverlapResult<MyEntity>>();
+            MyGamePruningStructure.GetTopmostEntitiesOverlappingRay(ref ray, results, MyEntityQueryType.Both);
+
+            foreach (var result in results)
+            {
+                MyAPIGateway.Utilities.ShowNotification("HitType: " + (result.Element as IMyCubeGrid)?.CustomName, 2000);
+                if (result.Distance > totalDist || RemainingImpacts <= 0 || result.Element == Firer.GetTopMostParent())
+                    continue;
+
+                Vector3D hitPosition = Position + normalDirection * result.Distance;
+
+                DebugDraw.AddLine(hitPosition, hitPosition + normalDirection, VRageMath.Color.Blue, 2);
+                DebugDraw.AddLine(Position, NextMoveStep, VRageMath.Color.Green, 2);
+
+                MaxBeamLength = (float) result.Distance;
+
+                if (MyAPIGateway.Session.IsServer)
+                {
+                    if (result.Element is IMyCubeGrid)
+                        DamageHandler.QueueEvent(new DamageEvent(result.Element, DamageEvent.DamageEntType.Grid, this, hitPosition, normalDirection, hitPosition + normalDirection, hitPosition - normalDirection));
+                    else if (result.Element is IMyCharacter)
+                        DamageHandler.QueueEvent(new DamageEvent(result.Element, DamageEvent.DamageEntType.Character, this, hitPosition, normalDirection, hitPosition + normalDirection, hitPosition - normalDirection));
+                }
+
+                if (MyAPIGateway.Session.IsServer)
+                    PlayImpactAudio(hitPosition); // Audio is global
+                if (!MyAPIGateway.Utilities.IsDedicated)
+                    DrawImpactParticle(hitPosition, normalDirection); // Visuals are clientside
+
+                Definition.LiveMethods.OnImpact?.Invoke(Id, hitPosition, Direction, result.Element);
+
+                RemainingImpacts--;
+            }
+
+            //MyAPIGateway.Physics.CastRayParallel(ref Position, ref NextMoveStep, 0, (hitInfo) =>
+            //{
+            //    if (RemainingImpacts <= 0 || hitInfo.HitEntity.EntityId == Firer)
+            //        return;
+            //
+            //    DebugDraw.AddLine(hitInfo.Position, hitInfo.Position - hitInfo.Normal, VRageMath.Color.Blue, 2);
+            //
+            //    MaxBeamLength = (float) (hitInfo.Fraction * length);
+            //
+            //    if (MyAPIGateway.Session.IsServer)
+            //    {
+            //        if (hitInfo.HitEntity is IMyCubeGrid)
+            //            DamageHandler.QueueEvent(new DamageEvent(hitInfo.HitEntity, DamageEvent.DamageEntType.Grid, this, hitInfo.Position, hitInfo.Normal, hitInfo.Position + hitInfo.Normal, hitInfo.Position - hitInfo.Normal));
+            //        else if (hitInfo.HitEntity is IMyCharacter)
+            //            DamageHandler.QueueEvent(new DamageEvent(hitInfo.HitEntity, DamageEvent.DamageEntType.Character, this, hitInfo.Position, hitInfo.Normal, hitInfo.Position + hitInfo.Normal, hitInfo.Position - hitInfo.Normal));
+            //    }
+            //
+            //    if (MyAPIGateway.Session.IsServer)
+            //        PlayImpactAudio(hitInfo.Position); // Audio is global
+            //    if (!MyAPIGateway.Utilities.IsDedicated)
+            //        DrawImpactParticle(hitInfo.Position, hitInfo.Normal); // Visuals are clientside
+            //
+            //    Definition.LiveMethods.OnImpact?.Invoke(Id, hitInfo.Position, Direction, (MyEntity)hitInfo.HitEntity);
+            //
+            //    RemainingImpacts--;
+            //});
+
+            //if (dist == -1)
+
+            //double nextDist = PerformRaycastRecursive(length);
+            //
+            //if (nextDist == -1)
+            //    return dist;
+            //
+            //// Get the furthest impact distance.
+            //return Math.Max(dist, nextDist);
         }
 
         public Vector3D NextMoveStep = Vector3D.Zero;
@@ -330,7 +405,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             if (projectile.InheritedVelocity.HasValue)
                 InheritedVelocity = projectile.InheritedVelocity.Value;
             if (projectile.Firer.HasValue)
-                Firer = projectile.Firer.Value;
+                Firer = (MyEntity) MyAPIGateway.Entities.GetEntityById(projectile.Firer ?? 0);
             TickUpdate(delta);
         }
 
@@ -363,7 +438,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                     projectile.Position = Position;
                     projectile.Direction = Direction;
                     projectile.InheritedVelocity = InheritedVelocity;
-                    projectile.Firer = Firer;
+                    projectile.Firer = Firer.EntityId;
                     //projectile.Velocity = Velocity;
                     break;
                 case 1:
@@ -379,7 +454,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                     projectile.Position = Position;
                     projectile.Direction = Direction;
                     projectile.InheritedVelocity = InheritedVelocity;
-                    projectile.Firer = Firer;
+                    projectile.Firer = Firer.EntityId;
                     break;
             }
 

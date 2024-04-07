@@ -29,7 +29,6 @@ namespace YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding
         internal IMyConveyorSorter SorterWep;
         internal WeaponDefinitionBase Definition;
         public readonly Guid HeartSettingsGUID = new Guid("06edc546-3e42-41f3-bc72-1d640035fbf2");
-        public const int HeartSettingsUpdateCount = 60 * 1 / 10;
 
         public Heart_Settings Settings = new Heart_Settings();
 
@@ -70,6 +69,11 @@ namespace YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
         }
 
+        public override void Close()
+        {
+            SorterWep.CubeGrid.OnBlockAdded -= UpdateHasLineOfSight;
+        }
+
         #region Event Handlers
 
 
@@ -98,6 +102,9 @@ namespace YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding
             SorterWep.ResourceSink.SetRequiredInputByType(MyResourceDistributorComponent.ElectricityId, Definition.Hardpoint.IdlePower);
             //SorterWep.ResourceSink.SetMaxRequiredInputByType(MyResourceDistributorComponent.ElectricityId, Definition.Hardpoint.IdlePower); // TODO: Set max power to include projectiles and RoF
 
+            SorterWep.CubeGrid.OnBlockAdded += UpdateHasLineOfSight;
+            UpdateHasLineOfSight();
+
             LoadSettings();
 
             // Implement weapon UI defaults here
@@ -114,7 +121,6 @@ namespace YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding
 
                 MuzzleMatrix = CalcMuzzleMatrix(0); // Set stored MuzzleMatrix
                 Magazines.UpdateReload();
-                HasLoS = HasLineOfSight();
 
                 if (!SorterWep.IsWorking) // Don't try shoot if the turret is disabled
                     return;
@@ -131,18 +137,27 @@ namespace YourName.ModName.Data.Scripts.HeartModule.Weapons.Setup.Adding
         /// Checks if the turret would intersect the grid.
         /// </summary>
         /// <returns></returns>
-        private bool HasLineOfSight()
+        public void UpdateHasLineOfSight(IMySlimBlock block = null) // TODO: Check on world load!
         {
             if (!Definition.Hardpoint.LineOfSightCheck) // Ignore if LoS check is disabled
-                return true;
+            {
+                HasLoS = true;
+                return;
+            }
 
             List<Vector3I> intersects = new List<Vector3I>();
             SorterWep.CubeGrid.RayCastCells(MuzzleMatrix.Translation, MuzzleMatrix.Translation + MuzzleMatrix.Forward * GridCheckRange, intersects);
 
             foreach (var intersect in intersects)
+            {
                 if (SorterWep.CubeGrid.CubeExists(intersect) && SorterWep.CubeGrid.GetCubeBlock(intersect) != SorterWep.SlimBlock)
-                    return false;
-            return true;
+                {
+                    HasLoS = false;
+                    return;
+                }
+            }
+
+            HasLoS = true;
         }
 
         float lastShoot = 0;

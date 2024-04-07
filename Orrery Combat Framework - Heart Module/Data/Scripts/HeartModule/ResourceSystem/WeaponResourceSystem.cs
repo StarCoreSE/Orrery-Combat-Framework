@@ -100,10 +100,10 @@ namespace Heart_Module.Data.Scripts.HeartModule.ResourceSystem
             }
 
             // Update resource status after consumption
-            if (MyAPIGateway.Multiplayer.IsServer)
-            {
-                ShowResourceStatus();
-            }
+            //if (MyAPIGateway.Multiplayer.IsServer)
+            //{
+            //    ShowResourceStatus();
+            //}
         }
 
         public void RegenerateResources(float deltaTime)
@@ -125,10 +125,10 @@ namespace Heart_Module.Data.Scripts.HeartModule.ResourceSystem
             }
 
             // Update resource status after regeneration
-            if (MyAPIGateway.Multiplayer.IsServer)
-            {
-                ShowResourceStatus();
-            }
+            //if (MyAPIGateway.Multiplayer.IsServer)
+            //{
+            //    ShowResourceStatus();
+            //}
         }
 
         // Call this method every update tick
