@@ -127,7 +127,7 @@ namespace Heart_Module.Data.Scripts.HeartModule
                             if (MyAPIGateway.Session.IsServer)
                                 MyAPIGateway.Utilities.SendMessage("[OCF] Entering degraded mode!");
                             MyAPIGateway.Utilities.ShowMessage("[OCF]", "Entering client degraded mode!");
-                            remainingDegradedModeTicks = 600;
+                            remainingDegradedModeTicks = 60; //end it after this amount
                         }
                         else
                             remainingDegradedModeTicks++;
