@@ -15,6 +15,7 @@ using System;
 using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Network;
@@ -136,6 +137,13 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup.Adding
                     {
                         HeartLog.Log("UpdateOnceBeforeFrame: Muzzle subpart found, getting dummies");
                         ((IMyEntity)muzzleSubpart).Model?.GetDummies(MuzzleDummies);
+
+                        foreach (var dummy in MuzzleDummies.Values)
+                        {
+                            HeartLog.Log("UpdateOnceBeforeFrame: Normalizing muzzle dummy matrix to remove unwanted scale");
+                            // Normalize the dummy matrix to remove any unwanted scale influence
+                            NormalizeDummyMatrix(dummy);
+                        }
                     }
                     else
                     {
@@ -146,6 +154,13 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup.Adding
                 {
                     HeartLog.Log("UpdateOnceBeforeFrame: Getting dummies from SorterWep model");
                     SorterWep.Model?.GetDummies(MuzzleDummies);
+
+                    foreach (var dummy in MuzzleDummies.Values)
+                    {
+                        HeartLog.Log("UpdateOnceBeforeFrame: Normalizing muzzle dummy matrix to remove unwanted scale");
+                        // Normalize the dummy matrix to remove any unwanted scale influence
+                        NormalizeDummyMatrix(dummy);
+                    }
                 }
 
                 HeartLog.Log("UpdateOnceBeforeFrame: Setting block damage modifier");
@@ -178,6 +193,30 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup.Adding
                 HeartLog.Log($"UpdateOnceBeforeFrame: Exception occurred: {ex.Message}");
                 HeartLog.Log($"UpdateOnceBeforeFrame: Stack trace: {ex.StackTrace}");
                 SoftHandle.RaiseException(ex, typeof(SorterWeaponLogic));
+            }
+        }
+
+        // Helper function to normalize the muzzle matrix
+        private void NormalizeDummyMatrix(IMyModelDummy dummy)
+        {
+            try
+            {
+                // Get the current matrix
+                var matrix = dummy.Matrix;
+
+                // Normalize the basis vectors to remove scale
+                matrix.Right = Vector3.Normalize(matrix.Right);
+                matrix.Up = Vector3.Normalize(matrix.Up);
+                matrix.Forward = Vector3.Normalize(matrix.Forward);
+
+                // Since the dummy.Matrix property is read-only, create a copy that will be used wherever necessary.
+                // Any calculations involving this dummy should use the normalized version of the matrix.
+                HeartLog.Log("NormalizeDummyMatrix: Dummy matrix normalized successfully to remove unwanted scale");
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Log($"NormalizeDummyMatrix: Exception while normalizing dummy matrix: {ex.Message}");
+                HeartLog.Log($"NormalizeDummyMatrix: Stack trace: {ex.StackTrace}");
             }
         }
 
@@ -400,34 +439,43 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup.Adding
 
         public virtual MatrixD CalcMuzzleMatrix(int id, bool local = false)
         {
-            if (SorterWep == null)
-            {
-                HeartLog.Log($"CalcMuzzleMatrix: SorterWep is null for weapon {Id}");
-                return MatrixD.Identity;
-            }
-
-            if (MuzzleDummies == null)
-            {
-                HeartLog.Log($"CalcMuzzleMatrix: MuzzleDummies is null for weapon {Id}");
-                return SorterWep.WorldMatrix;
-            }
-
             if (Definition.Assignments.Muzzles.Length == 0 || !MuzzleDummies.ContainsKey(Definition.Assignments.Muzzles[id]))
+            {
                 return SorterWep.WorldMatrix;
+            }
 
-            MatrixD dummyMatrix = MuzzleDummies[Definition.Assignments.Muzzles[id]].Matrix; // Dummy's local matrix
-            if (local)
-                return dummyMatrix;
+            try
+            {
+                MyEntitySubpart azSubpart = SubpartManager.GetSubpart((MyEntity)SorterWep, Definition.Assignments.AzimuthSubpart);
+                MyEntitySubpart evSubpart = SubpartManager.GetSubpart(azSubpart, Definition.Assignments.ElevationSubpart);
+                MatrixD partMatrix = evSubpart.WorldMatrix;
+                Matrix originalMuzzleMatrix = MuzzleDummies[Definition.Assignments.Muzzles[id]].Matrix;
 
-            MatrixD worldMatrix = SorterWep.WorldMatrix; // Block's world matrix
+                // Create a normalized copy of the muzzle matrix
+                Matrix normalizedMuzzleMatrix = CreateNormalizedMatrix(originalMuzzleMatrix);
 
-            // Combine the matrices by multiplying them to get the transformation of the dummy in world space
+                if (local)
+                {
+                    return normalizedMuzzleMatrix * evSubpart.PositionComp.LocalMatrixRef * azSubpart.PositionComp.LocalMatrixRef;
+                }
 
-            return dummyMatrix * worldMatrix;
+                return normalizedMuzzleMatrix * partMatrix;
+            }
+            catch { }
 
-            // Now combinedMatrix.Translation is the muzzle position in world coordinates,
-            // and combinedMatrix.Forward is the forward direction in world coordinates.
+            return MatrixD.Identity;
         }
+
+        // Helper function to create a normalized matrix copy
+        private Matrix CreateNormalizedMatrix(Matrix matrix)
+        {
+            Matrix result = matrix;
+            result.Right = Vector3.Normalize(matrix.Right);
+            result.Up = Vector3.Normalize(matrix.Up);
+            result.Forward = Vector3.Normalize(matrix.Forward);
+            return result;
+        }
+
 
         public void SetAmmo(int AmmoId)
         {
