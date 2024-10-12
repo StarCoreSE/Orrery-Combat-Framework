@@ -58,6 +58,13 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             }
         }
 
+        // "I lack the words to describe the level of my disgust"
+        private Vector3D NormalizeDirection(Vector3D direction)
+        {
+            return Vector3D.Normalize(direction);
+        }
+
+
         public Projectile() { }
 
         public Projectile(n_SerializableProjectile projectile)
@@ -117,7 +124,10 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             Definition = ProjectileDefinitionManager.GetDefinition(DefinitionId);
 
             this.Position = Position;
-            this.Direction = Direction;
+
+            // Modify the Direction assignment to use the normalization helper
+            this.Direction = NormalizeDirection(Direction);
+
             this.Firer = firer;
 
             IsHitscan = Definition.PhysicalProjectile.IsHitscan;
@@ -156,21 +166,20 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             if (!IsHitscan)
             {
                 Guidance?.RunGuidance(delta);
-
                 CheckHits();
 
                 // Apply gravity as an acceleration
                 float gravityMultiplier = Definition.PhysicalProjectile.GravityInfluenceMultiplier;
-                Vector3D gravity;
                 float dummyNaturalGravityInterference;
-                gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Position, out dummyNaturalGravityInterference);
-                Vector3D gravityDirection = Vector3D.Normalize(gravity);
+                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Position, out dummyNaturalGravityInterference);
+                Vector3D gravityDirection = NormalizeDirection(gravity); // Ensure gravity direction is normalized
                 double gravityAcceleration = gravity.Length() * gravityMultiplier;
 
                 // Update velocity based on gravity acceleration
                 Velocity += (float)(gravityAcceleration * delta);
 
-                // Update position accounting for gravity
+                // Ensure Direction is normalized before using it to update Position
+                Direction = NormalizeDirection(Direction);
                 Position += (InheritedVelocity + Direction * Velocity) * delta;
 
                 // Update distance travelled
@@ -179,7 +188,6 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                 // Calculate next move step with gravity acceleration
                 NextMoveStep = Position + (InheritedVelocity + Direction * Velocity) * delta;
 
-                // Ensure the projectile continues its trajectory when leaving gravity
                 if (gravityAcceleration <= 0)
                 {
                     // No gravity, continue with current velocity
@@ -190,8 +198,8 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
                     // Apply gravity acceleration to velocity
                     Velocity += (float)(gravityAcceleration * delta);
 
-                    // Adjust direction based on gravity
-                    Direction = Vector3D.Normalize(Direction + gravityDirection * gravityMultiplier);
+                    // Adjust direction based on gravity and normalize
+                    Direction = NormalizeDirection(Direction + gravityDirection * gravityMultiplier);
 
                     // Calculate next move step with gravity acceleration
                     NextMoveStep = Position + (InheritedVelocity + Direction * (Velocity + Definition.PhysicalProjectile.Acceleration * delta)) * delta;
@@ -201,6 +209,9 @@ namespace Heart_Module.Data.Scripts.HeartModule.Projectiles
             {
                 if (!MyAPIGateway.Session.IsServer)
                     RemainingImpacts = Definition.Damage.MaxImpacts;
+
+                // Normalize Direction for beams as well
+                Direction = NormalizeDirection(Direction);
                 NextMoveStep = Position + Direction * Definition.PhysicalProjectile.MaxTrajectory;
 
                 if (RemainingImpacts > 0)
