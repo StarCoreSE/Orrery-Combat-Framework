@@ -196,7 +196,7 @@ namespace Heart_Module.Data.Scripts.HeartModule.Weapons.Setup.Adding
             }
         }
 
-        // Helper function to normalize the muzzle matrix
+        //to fix muzzle scales affecting projectile speeds we normalized on the projectile end. this is to ensure no bullshit like recoil gets affected on the weapon end
         private void NormalizeDummyMatrix(IMyModelDummy dummy)
         {
             try
