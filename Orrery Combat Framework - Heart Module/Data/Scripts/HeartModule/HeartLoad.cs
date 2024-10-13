@@ -187,50 +187,30 @@ namespace Heart_Module.Data.Scripts.HeartModule
         {
             try
             {
-                HeartLog.Log($"OnEntityAdd: Starting for entity {entity?.EntityId}");
-
+                // Ensure the entity is not null
                 if (entity == null)
-                {
-                    HeartLog.Log("OnEntityAdd: Entity is null, skipping");
                     return;
-                }
 
-                if (HeartData.I == null)
-                {
-                    HeartLog.Log("OnEntityAdd: HeartData.I is null, skipping");
-                    return;
-                }
-
+                // Try to cast to IMyCubeGrid, return if it's not a grid
                 var grid = entity as IMyCubeGrid;
-                if (grid != null)
+                if (grid == null)
+                    return;
+
+                // Skip grids without physics (ghost/projection grids)
+                if (grid.Physics == null)
+                    return;
+
+                // Only proceed if HeartData.I.OnGridAdd is not null
+                if (HeartData.I.OnGridAdd != null)
                 {
-                    HeartLog.Log($"OnEntityAdd: Entity is a CubeGrid {grid.EntityId}");
-
-                    if (grid.Physics == null)
-                    {
-                        HeartLog.Log($"OnEntityAdd: Grid {grid.EntityId} has no physics, skipping");
-                        return;
-                    }
-
-                    if (HeartData.I.OnGridAdd == null)
-                    {
-                        HeartLog.Log("OnEntityAdd: HeartData.I.OnGridAdd is null, skipping");
-                        return;
-                    }
-
-                    HeartLog.Log($"OnEntityAdd: Invoking OnGridAdd for grid {grid.EntityId}");
+                    // Invoke the OnGridAdd action for valid CubeGrid
                     HeartData.I.OnGridAdd.Invoke(grid);
-                }
-                else
-                {
-                    HeartLog.Log($"OnEntityAdd: Entity {entity.EntityId} is not a CubeGrid, skipping");
                 }
             }
             catch (Exception ex)
             {
                 HeartLog.Log($"OnEntityAdd: Exception occurred: {ex.Message}");
-                HeartLog.Log($"OnEntityAdd: Stack trace: {ex.StackTrace}");
-                SoftHandle.RaiseException(ex);
+                SoftHandle.RaiseException(ex); // Handle the exception with your defined SoftHandle mechanism
             }
         }
 
@@ -238,44 +218,29 @@ namespace Heart_Module.Data.Scripts.HeartModule
         {
             try
             {
-                HeartLog.Log($"OnEntityRemove: Starting for entity {entity?.EntityId}");
-
+                // Ensure the entity is not null
                 if (entity == null)
-                {
-                    HeartLog.Log("OnEntityRemove: Entity is null, skipping");
                     return;
-                }
 
-                if (HeartData.I == null)
-                {
-                    HeartLog.Log("OnEntityRemove: HeartData.I is null, skipping");
-                    return;
-                }
-
+                // Try to cast to IMyCubeGrid, return if it's not a grid
                 var grid = entity as IMyCubeGrid;
-                if (grid != null)
+                if (grid == null)
+                    return;
+
+                // Skip grids without physics (ghost/projection grids)
+                if (grid.Physics == null)
+                    return;
+
+                // Only proceed if HeartData.I.OnGridRemove is not null
+                if (HeartData.I.OnGridRemove != null)
                 {
-                    HeartLog.Log($"OnEntityRemove: Entity is a CubeGrid {grid.EntityId}");
-
-                    if (HeartData.I.OnGridRemove == null)
-                    {
-                        HeartLog.Log("OnEntityRemove: HeartData.I.OnGridRemove is null, skipping");
-                        return;
-                    }
-
-                    HeartLog.Log($"OnEntityRemove: Invoking OnGridRemove for grid {grid.EntityId}");
+                    // Invoke the OnGridRemove action for valid CubeGrid
                     HeartData.I.OnGridRemove.Invoke(grid);
-                }
-                else
-                {
-                    HeartLog.Log($"OnEntityRemove: Entity {entity.EntityId} is not a CubeGrid, skipping");
                 }
             }
             catch (Exception ex)
             {
-                HeartLog.Log($"OnEntityRemove: Exception occurred: {ex.Message}");
-                HeartLog.Log($"OnEntityRemove: Stack trace: {ex.StackTrace}");
-                SoftHandle.RaiseException(ex);
+                SoftHandle.RaiseException(ex); // Handle the exception with your defined SoftHandle mechanism
             }
         }
 
