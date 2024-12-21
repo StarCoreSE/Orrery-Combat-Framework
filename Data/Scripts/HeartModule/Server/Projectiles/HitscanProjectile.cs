@@ -50,7 +50,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             #region IsActive Checking
 
             {
-                if (Age > Definition.PhysicalProjectileDef.MaxLifetime)
+                if (Age > Definition.PhysicalProjectileDef.MaxLifetime && Definition.PhysicalProjectileDef.MaxLifetime > 0)
                     IsActive = false;
             }
 
@@ -259,6 +259,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             {
                 Id = Id,
                 Position = Raycast.From,
+                DidImpact = HitCount > 0,
             };
         }
 

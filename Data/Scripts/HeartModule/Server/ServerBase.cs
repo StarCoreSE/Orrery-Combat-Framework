@@ -51,26 +51,13 @@ namespace Orrery.HeartModule.Server
 
                 if (_projectileManager.ActiveProjectiles < 20 && _ticks++ % 30 == 0)
                 {
-                    PhysicalProjectile p = new PhysicalProjectile(new ProjectileDefinitionBase
-                    {
-                        PhysicalProjectileDef = new PhysicalProjectileDef
-                        {
-                            MaxTrajectory = 5000,
-                            Velocity = 500,
-                            GravityInfluenceMultiplier = 1,
-                            MaxLifetime = 15,
-                        },
-                        DamageDef = new DamageDef
-                        {
-                            BaseDamage = 1000,
-                            AreaDamage = 2000,
-                            AreaRadius = 2.5f,
-                        }
-                    }, Vector3D.Zero, Vector3D.Forward);
+                    PhysicalProjectile p = new PhysicalProjectile(DefinitionManager.ProjectileDefinitions["testdef"], Vector3D.Zero, Vector3D.Forward);
 
                     _projectileManager.SpawnProjectile(p);
                 }
                 //beam.Owner = MyAPIGateway.Session?.Player?.Character;
+
+                MyAPIGateway.Utilities.ShowNotification($"Server: {_projectileManager.ActiveProjectiles}", 1000/60);
             }
             catch (Exception ex)
             {

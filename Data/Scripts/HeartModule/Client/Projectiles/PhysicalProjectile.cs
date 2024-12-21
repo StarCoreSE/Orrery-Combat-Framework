@@ -32,12 +32,31 @@ namespace Orrery.HeartModule.Client.Projectiles
             }
 
             #endregion
+
+            base.Update();
+        }
+
+        public override void UpdateDraw(double deltaTime = 1/60d)
+        {
+            _maxBeamLength = 0;
+            if (Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
+                GlobalEffects.AddLine(Raycast.From, Raycast.From - Raycast.Direction * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+
+            base.UpdateDraw(deltaTime);
         }
 
         public override void UpdateSync(SerializedSyncProjectile data)
         {
             base.UpdateSync(data);
             Velocity = data.Velocity;
+        }
+
+        internal override void UpdateAudio()
+        {
+            if (!HasAudio || !Definition.AudioDef.HasTravelSound) return;
+
+            base.UpdateAudio();
+            ProjectileSound.SetVelocity(Velocity);
         }
     }
 }

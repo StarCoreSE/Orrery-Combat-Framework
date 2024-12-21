@@ -41,6 +41,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 Raycast.To = Raycast.From + (InheritedVelocity + Velocity) * deltaTime;
                 Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
             }
+
             #endregion
 
             #region IsActive Checking
