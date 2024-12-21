@@ -1,17 +1,10 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
+using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
-using Sandbox.Game.Screens.Helpers;
 using Sandbox.ModAPI;
-using VRage.Game;
 using VRage.Game.Components;
-using VRage.Game.ModAPI;
-using VRage.Utils;
 using VRageMath;
 
 namespace Orrery.HeartModule.Server
@@ -19,23 +12,44 @@ namespace Orrery.HeartModule.Server
     [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
     internal class ServerBase : MySessionComponentBase
     {
-        private Queue<double> elapsed = new Queue<double>();
-        public readonly HashSet<HitscanProjectile> Projectiles = new HashSet<HitscanProjectile>();
-        private readonly List<HitscanProjectile> _deadProjectiles = new List<HitscanProjectile>();
-
-        public Dictionary<HitscanProjectile, IMyGps> Gps = new Dictionary<HitscanProjectile, IMyGps>();
+        public static ServerBase I;
+        private ServerNetwork _network = new ServerNetwork();
+        private ProjectileManager _projectileManager = new ProjectileManager();
 
         public override void LoadData()
         {
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+            
+            I = this;
+            _network.LoadData();
 
+            HeartLog.Info("ServerBase initialized.");
+        }
+
+        protected override void UnloadData()
+        {
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+
+            _network.UnloadData();
+            I = null;
+
+            HeartLog.Info("ServerBase closed.");
         }
 
         private int _ticks;
         public override void UpdateAfterSimulation()
         {
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+
             try
             {
-                if (Projectiles.Count < 20 && _ticks++ % 30 == 0)
+                _network.Update();
+                _projectileManager.Update();
+
+                if (_projectileManager.ActiveProjectiles < 20 && _ticks++ % 30 == 0)
                 {
                     PhysicalProjectile p = new PhysicalProjectile(new ProjectileDefinitionBase
                     {
@@ -54,47 +68,9 @@ namespace Orrery.HeartModule.Server
                         }
                     }, Vector3D.Zero, Vector3D.Forward);
 
-                    Projectiles.Add(p);
-
-                    IMyGps g = MyAPIGateway.Session.GPS.Create("Projectile " + Projectiles.Count, "", p.Raycast.From,
-                        true, true);
-                    Gps.Add(p, g);
-                    MyAPIGateway.Session.GPS.AddGps(MyAPIGateway.Session.Player.IdentityId, g);
+                    _projectileManager.SpawnProjectile(p);
                 }
                 //beam.Owner = MyAPIGateway.Session?.Player?.Character;
-
-                Stopwatch watch = Stopwatch.StartNew();
-
-                foreach (var projectile in Projectiles)
-                {
-                    projectile.UpdateTick(1/60d);
-                    if (!projectile.IsActive)
-                        _deadProjectiles.Add(projectile);
-
-                    Vector4 color = Color.AliceBlue;
-                    MySimpleObjectDraw.DrawLine(projectile.Raycast.From, projectile.Raycast.To,
-                        MyStringId.GetOrCompute("WeaponLaser"), ref color, 0.4f);
-
-                    Gps[projectile].Coords = projectile.Raycast.From;
-                    MyAPIGateway.Session.GPS.ModifyGps(MyAPIGateway.Session.Player.IdentityId, Gps[projectile]);
-                }
-
-                foreach (var deadProjectile in _deadProjectiles)
-                {
-                    MyAPIGateway.Session.GPS.RemoveGps(MyAPIGateway.Session.Player.IdentityId, Gps[deadProjectile]);
-                    Gps.Remove(deadProjectile);
-                    Projectiles.Remove(deadProjectile);
-                }
-
-                _deadProjectiles.Clear();
-
-                watch.Stop();
-
-                elapsed.Enqueue(watch.ElapsedTicks/(double) TimeSpan.TicksPerMillisecond);
-                while (elapsed.Count > 120)
-                    elapsed.Dequeue();
-
-                MyAPIGateway.Utilities.ShowNotification($"{elapsed.Sum()/elapsed.Count:N}", 1000/60);
             }
             catch (Exception ex)
             {

@@ -1,25 +1,29 @@
 ﻿using ProtoBuf;
 using VRageMath;
 
-namespace Orrery.HeartModule.Server.Projectiles
+namespace Orrery.HeartModule.Shared.Networking
 {
     /// <summary>
     /// Used to keep already-active projectiles in sync.
     /// </summary>
     [ProtoContract]
-    internal class SerializedSyncProjectile
+    internal class SerializedSyncProjectile : PacketBase
     {
         [ProtoMember(1)] public uint Id;
         [ProtoMember(2)] public Vector3D Position;
         [ProtoMember(3)] public Vector3 Direction;
         [ProtoMember(4, IsRequired = false)] public Vector3 Velocity;
+        public override void Received(ulong SenderSteamId)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
     /// <summary>
     /// Used when spawning projectiles.
     /// </summary>
     [ProtoContract]
-    internal class SerializedSpawnProjectile
+    internal class SerializedSpawnProjectile : PacketBase
     {
         [ProtoMember(1)] public ushort DefinitionId;
         [ProtoMember(2)] public uint Id;
@@ -27,15 +31,23 @@ namespace Orrery.HeartModule.Server.Projectiles
         [ProtoMember(4)] public Vector3 Direction;
         [ProtoMember(5, IsRequired = false)] public Vector3 Velocity;
         [ProtoMember(6)] public long OwnerId;
+        public override void Received(ulong SenderSteamId)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 
     /// <summary>
     /// Used when closing projectiles.
     /// </summary>
     [ProtoContract]
-    internal class SerializedCloseProjectile
+    internal class SerializedCloseProjectile : PacketBase
     {
         [ProtoMember(1)] public uint Id;
         [ProtoMember(2)] public Vector3D Position;
+        public override void Received(ulong SenderSteamId)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

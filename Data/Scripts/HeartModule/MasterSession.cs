@@ -14,6 +14,7 @@ namespace Orrery.HeartModule
         public static MasterSession I;
         private HeartLog _heartLog;
         private CriticalHandle _criticalHandle;
+        private int _ticks;
 
         public override void LoadData()
         {
@@ -30,7 +31,21 @@ namespace Orrery.HeartModule
 
         public override void UpdateAfterSimulation()
         {
-            _criticalHandle.Update();
+            try
+            {
+                _criticalHandle.Update();
+
+                // Get players
+                if (_ticks++ % 10 == 0 && MyAPIGateway.Session.IsServer)
+                {
+                    HeartData.I.Players.Clear(); // KEEN DOESN'T. CLEAR. THE LIST. AUTOMATICALLY. AUGH. -aristeas
+                    MyAPIGateway.Multiplayer.Players.GetPlayers(HeartData.I.Players);
+                }
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(MasterSession));
+            }
         }
 
         protected override void UnloadData()

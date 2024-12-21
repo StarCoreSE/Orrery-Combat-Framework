@@ -54,11 +54,12 @@ namespace Orrery.HeartModule.Shared.Definitions
             return null;
         }
 
-        public static string GetProjectileDefinitionFromId(ushort id)
+        public static ProjectileDefinitionBase GetProjectileDefinitionFromId(ushort id)
         {
             foreach (var kvp in ProjectileDefinitionIds)
                 if (kvp.Key == id)
-                    return kvp.Value;
+                    return ProjectileDefinitions.GetValueOrDefault(kvp.Value, null);
+            
             return null;
         }
 

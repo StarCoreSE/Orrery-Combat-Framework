@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
@@ -35,7 +36,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 throw new ArgumentNullException(nameof(definition));
 
             Definition = definition;
-            Raycast = new LineD(start, direction * Definition.PhysicalProjectileDef.MaxTrajectory);
+            Raycast = new LineD(start, start + direction * Definition.PhysicalProjectileDef.MaxTrajectory);
             Owner = owner;
         }
 

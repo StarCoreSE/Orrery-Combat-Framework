@@ -1,4 +1,5 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Networking;
 using Sandbox.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
@@ -9,13 +10,11 @@ namespace Orrery.HeartModule.Server.Projectiles
     {
         public Vector3D InheritedVelocity = Vector3D.Zero;
         public Vector3D Velocity;
-        public Vector3D NextMoveStep = Vector3D.Zero;
-        public Vector3D Direction = Vector3D.Forward;
         public double DistanceTravelled { get; private set; } = 0;
 
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)
         {
-            Direction = direction;
+            Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
             Velocity = direction * Definition.PhysicalProjectileDef.Velocity;
             if (owner?.Physics != null)
                 InheritedVelocity = owner.Physics.GetVelocityAtPoint(start);
@@ -27,48 +26,20 @@ namespace Orrery.HeartModule.Server.Projectiles
                 return;
 
             #region Movement
+
             {
-                // Apply gravity as an acceleration
-                float gravityMultiplier = Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
-                Vector3D gravity;
                 float dummyNaturalGravityInterference;
-                gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Raycast.From, out dummyNaturalGravityInterference);
-                Vector3D gravityDirection = Vector3D.Normalize(gravity);
-                double gravityAcceleration = gravity.Length() * gravityMultiplier;
+                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Raycast.From, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
 
                 // Update velocity based on gravity acceleration
-                Velocity += (float)(gravityAcceleration * deltaTime);
+                Velocity += gravity * deltaTime;
 
-                // Update position accounting for gravity
-                Raycast.From += (InheritedVelocity + Direction * Velocity) * deltaTime;
+                // Raycast.From represents the projectile's position.
+                Raycast.From += (InheritedVelocity + Velocity) * deltaTime;
+                DistanceTravelled += (InheritedVelocity + Velocity).Length() * deltaTime;
 
-                // Update distance travelled
-                DistanceTravelled += Velocity.Length() * deltaTime;
-
-                // Calculate next move step with gravity acceleration
-                NextMoveStep = Raycast.From + (InheritedVelocity + Direction * Velocity) * deltaTime;
-
-                // Ensure the projectile continues its trajectory when leaving gravity
-                if (gravityAcceleration <= 0)
-                {
-                    // No gravity, continue with current velocity
-                    NextMoveStep = Raycast.From + (InheritedVelocity + Direction * Velocity) * deltaTime;
-                }
-                else
-                {
-                    // Apply gravity acceleration to velocity
-                    Velocity += (float)(gravityAcceleration * deltaTime);
-
-                    // Adjust direction based on gravity
-                    Direction = Vector3D.Normalize(Direction + gravityDirection * gravityMultiplier);
-
-                    // Calculate next move step with gravity acceleration
-                    NextMoveStep = Raycast.From + (InheritedVelocity + Direction * (Velocity + Definition.PhysicalProjectileDef.Acceleration * deltaTime)) * deltaTime;
-                }
-
-                Raycast.To = NextMoveStep;
-                Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable
-                //Raycast.From -= Direction * distance * 0.1f;
+                Raycast.To = Raycast.From + (InheritedVelocity + Velocity) * deltaTime;
+                Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
             }
             #endregion
 
