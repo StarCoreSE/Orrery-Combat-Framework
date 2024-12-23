@@ -33,6 +33,7 @@ namespace Orrery.HeartModule.Server
                 return;
 
             _network.UnloadData();
+            _projectileManager.Close();
             I = null;
 
             HeartLog.Info("ServerBase closed.");
@@ -49,15 +50,14 @@ namespace Orrery.HeartModule.Server
                 _network.Update();
                 _projectileManager.Update();
 
-                if (_projectileManager.ActiveProjectiles < 20 && _ticks++ % 30 == 0)
+                if (_ticks++ % 30 == 0)
                 {
-                    PhysicalProjectile p = new PhysicalProjectile(DefinitionManager.ProjectileDefinitions["testdef"], Vector3D.Zero, Vector3D.Forward);
+                    PhysicalProjectile p = new PhysicalProjectile(DefinitionManager.ProjectileDefinitions["testdef"], MyAPIGateway.Session.Player.GetPosition(), MyAPIGateway.Session.Player.Character.WorldMatrix.Forward, MyAPIGateway.Session.Player.Character);
 
-                    _projectileManager.SpawnProjectile(p);
+                    ProjectileManager.SpawnProjectile(p);
                 }
-                //beam.Owner = MyAPIGateway.Session?.Player?.Character;
 
-                MyAPIGateway.Utilities.ShowNotification($"Server: {_projectileManager.ActiveProjectiles}", 1000/60);
+                MyAPIGateway.Utilities.ShowNotification($"Server: {ProjectileManager.ActiveProjectiles}", 1000/60);
             }
             catch (Exception ex)
             {

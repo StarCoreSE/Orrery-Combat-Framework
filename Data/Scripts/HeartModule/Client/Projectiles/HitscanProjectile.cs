@@ -24,14 +24,13 @@ namespace Orrery.HeartModule.Client.Projectiles
         #region FX variables
         internal MyEntity ProjectileEntity = new MyEntity();
         internal MyParticleEffect ProjectileEffect;
-        internal uint RenderId = 0;
         internal MyEntity3DSoundEmitter ProjectileSound;
         public bool IsVisible = true;
         public bool HasAudio = true;
         /// <summary>
         /// Limits beam length if the beam impacts a block.
         /// </summary>
-        internal float _maxBeamLength = 0;
+        internal float MaxBeamLength = 0;
         #endregion
 
         
@@ -43,15 +42,14 @@ namespace Orrery.HeartModule.Client.Projectiles
             if (data.OwnerId != 0)
                 Owner = MyAPIGateway.Entities.GetEntityById(data.OwnerId);
             Raycast = new LineD(data.Position, data.Position + data.Direction);
+            ProjectileMatrix = MatrixD.CreateWorld(Raycast.From, Raycast.Direction, Vector3D.Cross(Raycast.Direction, Vector3D.Up)); // TODO: Inherit up vector from firer.
 
             InitEffects();
         }
 
         public virtual void Update(double deltaTime = 1/60d)
         {
-            ProjectileMatrix = MatrixD.CreateWorld(Raycast.From, Raycast.Direction, Vector3D.Cross(Raycast.Direction, Vector3D.Up)); // TODO: Inherit up vector from firer.
-
-            _maxBeamLength = Definition.PhysicalProjectileDef.MaxTrajectory;
+            MaxBeamLength = Definition.PhysicalProjectileDef.MaxTrajectory;
 
             UpdateAudio();
         }
@@ -81,10 +79,7 @@ namespace Orrery.HeartModule.Client.Projectiles
                 ProjectileEntity.Flags |= EntityFlags.IsNotGamePrunningStructureObject;
                 MyEntities.Add(ProjectileEntity, true);
                 ProjectileEntity.WorldMatrix = MatrixD.CreateWorld(Raycast.From, Raycast.Direction, Vector3D.Cross(Raycast.Direction, Vector3D.Up));
-                RenderId = ProjectileEntity.Render.GetRenderObjectID();
             }
-            else
-                RenderId = uint.MaxValue;
 
             if (HasAudio && Definition.AudioDef.HasTravelSound)
             {
@@ -102,17 +97,23 @@ namespace Orrery.HeartModule.Client.Projectiles
             if (!IsVisible)
                 return;
 
-            if (_maxBeamLength > 0 && Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
-                GlobalEffects.AddLine(Raycast.From, Raycast.From + Raycast.Direction * _maxBeamLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+            ProjectileMatrix.Translation = Raycast.From;
+            ProjectileMatrix.Forward = Raycast.Direction;
+            ProjectileMatrix.Up = Vector3D.Cross(Raycast.Direction, ProjectileMatrix.Right);
+
+            if (MaxBeamLength > 0 && Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
+                GlobalEffects.AddLine(Raycast.From, Raycast.From + Raycast.Direction * MaxBeamLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
 
             if (Definition.VisualDef.HasAttachedParticle && !HeartData.I.IsPaused)
             {
                 if (ProjectileEffect == null)
                 {
                     if (!MyParticlesManager.TryCreateParticleEffect(Definition.VisualDef.AttachedParticle,
-                            ref ProjectileMatrix, ref Vector3D.Zero, RenderId, out ProjectileEffect))
-                        throw new Exception($"Failed to create new projectile particle! RenderId: {RenderId} Effect: {Definition.VisualDef.AttachedParticle}");
+                            ref ProjectileMatrix, ref Vector3D.Zero, uint.MaxValue, out ProjectileEffect))
+                        throw new Exception($"Failed to create new projectile particle! Effect: {Definition.VisualDef.AttachedParticle}");
                 }
+
+                ProjectileEffect.WorldMatrix = ProjectileMatrix;
             }
 
             ProjectileEntity.WorldMatrix = ProjectileMatrix;
@@ -130,14 +131,14 @@ namespace Orrery.HeartModule.Client.Projectiles
             ProjectileSound.SetPosition(Raycast.From);
         }
 
-        internal virtual void DrawImpactParticle(Vector3D ImpactPosition, Vector3D ImpactNormal) // TODO: Does not work in multiplayer
+        internal virtual void DrawImpactParticle(Vector3D impactPosition, Vector3D impactNormal) // TODO: Does not work in multiplayer
         {
-            if (!IsVisible || Definition.VisualDef.ImpactParticle == "")
+            if (!IsVisible || !Definition.VisualDef.HasImpactParticle)
                 return;
 
-            MatrixD matrix = MatrixD.CreateWorld(ImpactPosition, ImpactNormal, Vector3D.CalculatePerpendicularVector(ImpactNormal));
+            MatrixD matrix = MatrixD.CreateWorld(impactPosition, impactNormal, Vector3D.CalculatePerpendicularVector(impactNormal));
             MyParticleEffect hitEffect;
-            if (MyParticlesManager.TryCreateParticleEffect(Definition.VisualDef.ImpactParticle, ref matrix, ref ImpactPosition, uint.MaxValue, out hitEffect))
+            if (MyParticlesManager.TryCreateParticleEffect(Definition.VisualDef.ImpactParticle, ref matrix, ref impactPosition, uint.MaxValue, out hitEffect))
             {
                 //MyAPIGateway.Utilities.ShowNotification("Spawned particle at " + hitEffect.WorldMatrix.Translation);
                 //hitEffect.Velocity = av.Hit.HitVelocity;
@@ -151,10 +152,10 @@ namespace Orrery.HeartModule.Client.Projectiles
             }
         }
 
-        internal virtual void PlayImpactAudio(Vector3D ImpactPosition)
+        internal virtual void PlayImpactAudio(Vector3D impactPosition)
         {
             if (!HasAudio || !Definition.AudioDef.HasImpactSound) return;
-            MyVisualScriptLogicProvider.PlaySingleSoundAtPosition(Definition.AudioDef.ImpactSound, ImpactPosition);
+            MyVisualScriptLogicProvider.PlaySingleSoundAtPosition(Definition.AudioDef.ImpactSound, impactPosition);
         }
 
         #endregion

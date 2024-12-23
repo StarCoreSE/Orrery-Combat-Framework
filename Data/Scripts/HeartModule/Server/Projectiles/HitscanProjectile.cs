@@ -124,11 +124,15 @@ namespace Orrery.HeartModule.Server.Projectiles
                 if (closestBlock != null)
                 {
                     int prevHitCount = HitCount;
-                    OnImpact(closestBlock);
+
+                    float damageModifier = Definition.DamageDef.FatBlockDamageMod;
+                    if (closestBlock.FatBlock == null)
+                        damageModifier = Definition.DamageDef.SlimBlockDamageMod;
+                    OnImpact(closestBlock, damageModifier);
 
                     // AoE damage
                     if (Definition.DamageDef.AreaDamage != 0 && Definition.DamageDef.AreaRadius > 0)
-                        DoAreaDamage(closestIntersect, (MyEntity) closestBlock.CubeGrid);
+                        CheckAreaDamage(closestIntersect, (MyEntity) closestBlock.CubeGrid);
 
                     if (Definition.UngroupedDef.Impulse != 0)
                         closestBlock.CubeGrid.Physics?.ApplyImpulse(Raycast.Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), closestIntersect);
@@ -136,6 +140,26 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
 
             _raycastCache.Clear();
+
+            #region Projectile Impact Checking
+
+            if (!IsActive || Definition.DamageDef.DamageToProjectiles <= 0)
+            {
+                var collidedProjectiles = ProjectileManager.GetProjectilesInLine(Raycast);
+
+                foreach (var projectile in collidedProjectiles)
+                {
+                    if (!IsActive)
+                        break;
+                    projectile.Health -= Definition.DamageDef.DamageToProjectiles;
+                    HitCount++;
+                    CheckAreaDamage(projectile.Raycast.From, null);
+                    if (Definition.DamageDef.MaxImpacts <= 0 || HitCount >= Definition.DamageDef.MaxImpacts)
+                        IsActive = false;
+                }
+            }
+
+            #endregion
         }
 
         internal virtual void OnImpact(MyEntity hitEntity, Vector3D hitPosition)
@@ -159,13 +183,13 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             // AoE damage
             if (Definition.DamageDef.AreaDamage != 0 && Definition.DamageDef.AreaRadius > 0)
-                DoAreaDamage(hitPosition, hitEntity);
+                CheckAreaDamage(hitPosition, hitEntity);
 
             if (Definition.UngroupedDef.Impulse != 0)
                 hitEntity.Physics?.ApplyImpulse(Raycast.Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), hitPosition);
         }
 
-        internal virtual void OnImpact(IMyDestroyableObject destroyableObject)
+        internal virtual void OnImpact(IMyDestroyableObject destroyableObject, float damageModifier = 1)
         {
             // If MaxImpacts <= 0, hit once. Else, hit until out of MaxImpacts.
             do
@@ -173,7 +197,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 // Note that we are intentionally not doing deformation. TODO: Add a config option for deformation
                 // This can only run on the server, so damage should always be synced.
                 if (Definition.DamageDef.BaseDamage != 0)
-                    destroyableObject.DoDamage(Definition.DamageDef.BaseDamage, MyDamageType.Bullet, true, attackerId: Owner?.EntityId ?? 0);
+                    destroyableObject.DoDamage(Definition.DamageDef.BaseDamage * damageModifier, MyDamageType.Bullet, true, attackerId: Owner?.EntityId ?? 0);
 
                 HitCount++;
             }
@@ -184,7 +208,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 IsActive = false;
         }
 
-        internal virtual void DoAreaDamage(Vector3D hitPosition, MyEntity hitEntity)
+        internal virtual void CheckAreaDamage(Vector3D hitPosition, MyEntity hitEntity)
         {
             BoundingSphereD aoeSphere = new BoundingSphereD(hitPosition, Definition.DamageDef.AreaRadius);
             MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref aoeSphere, _areaHitCache);
@@ -194,40 +218,45 @@ namespace Orrery.HeartModule.Server.Projectiles
                 if (entity.Physics == null || entity == hitEntity)
                     continue;
 
-                if (entity is IMyCubeGrid)
-                {
-                    var grid = (IMyCubeGrid) entity;
-                    foreach (var block in grid.GetBlocksInsideSphere(ref aoeSphere))
-                    {
-                        // TODO AreaFalloff
-                        block.DoDamage(Definition.DamageDef.AreaDamage, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
-                    }
-                }
-                else if (entity is IMyDestroyableObject)
-                {
-                    ((IMyDestroyableObject) entity).DoDamage(Definition.DamageDef.AreaDamage, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
-                }
+                ApplyAreaDamageInternal(entity, aoeSphere);
             }
             _areaHitCache.Clear();
 
+            // Sometimes GetAllTopMostEntitiesInSphere misses the hit entity, this ensures it is always hit.
+            if (hitEntity != null)
+                ApplyAreaDamageInternal(hitEntity, aoeSphere);
+
+
+            #region Projectile AoE Damage
+            if (Definition.DamageDef.DamageToProjectiles > 0 && Definition.DamageDef.DamageToProjectilesRadius > 0)
             {
-                if (hitEntity is IMyCubeGrid)
+                var collidedProjectiles = ProjectileManager.GetProjectilesInSphere(new BoundingSphereD(Raycast.From, Definition.DamageDef.DamageToProjectilesRadius));
+
+                foreach (var projectile in collidedProjectiles)
+                    projectile.Health -= Definition.DamageDef.DamageToProjectiles;
+            }
+            #endregion
+        }
+
+        private void ApplyAreaDamageInternal(MyEntity hitEntity, BoundingSphereD aoeSphere)
+        {
+            if (hitEntity is IMyCubeGrid)
+            {
+                var grid = (IMyCubeGrid) hitEntity;
+                foreach (var block in grid.GetBlocksInsideSphere(ref aoeSphere))
                 {
-                    var grid = (IMyCubeGrid) hitEntity;
-                    foreach (var block in grid.GetBlocksInsideSphere(ref aoeSphere))
-                    {
-                        // TODO AreaFalloff
-                        block.DoDamage(Definition.DamageDef.AreaDamage, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
-                    }
-                }
-                else if (hitEntity is IMyDestroyableObject)
-                {
-                    ((IMyDestroyableObject) hitEntity).DoDamage(Definition.DamageDef.AreaDamage, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
+                    float damageModifier = Definition.DamageDef.FatBlockDamageMod;
+                    if (block.FatBlock == null)
+                        damageModifier = Definition.DamageDef.SlimBlockDamageMod;
+
+                    // TODO AreaFalloff
+                    block.DoDamage(Definition.DamageDef.AreaDamage * damageModifier, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
                 }
             }
-            
-
-            // TODO check for projectiles
+            else if (hitEntity is IMyDestroyableObject)
+            {
+                ((IMyDestroyableObject) hitEntity).DoDamage(Definition.DamageDef.AreaDamage, MyDamageType.Explosion, true, attackerId: Owner?.EntityId ?? 0);
+            }
         }
 
         internal virtual SerializedSpawnProjectile ToSerializedSpawnProjectile()

@@ -38,7 +38,7 @@ namespace Orrery.HeartModule.Client.Projectiles
 
         public override void UpdateDraw(double deltaTime = 1/60d)
         {
-            _maxBeamLength = 0;
+            MaxBeamLength = 0;
             if (Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
                 GlobalEffects.AddLine(Raycast.From, Raycast.From - Raycast.Direction * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
 

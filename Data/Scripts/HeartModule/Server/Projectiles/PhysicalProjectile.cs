@@ -1,6 +1,8 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
@@ -10,14 +12,25 @@ namespace Orrery.HeartModule.Server.Projectiles
     {
         public Vector3D InheritedVelocity = Vector3D.Zero;
         public Vector3D Velocity;
+        public float Health;
         public double DistanceTravelled { get; private set; } = 0;
 
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)
         {
             Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
             Velocity = direction * Definition.PhysicalProjectileDef.Velocity;
+            Health = Definition.PhysicalProjectileDef.Health;
             if (owner?.Physics != null)
-                InheritedVelocity = owner.Physics.GetVelocityAtPoint(start);
+            {
+                Vector3D ownerCenter;
+                if (owner is IMyCharacter)
+                    ownerCenter = owner.Physics.Center;
+                else
+                    ownerCenter = owner.Physics.CenterOfMassWorld;
+
+                // Add linear velocity at point
+                InheritedVelocity = owner.Physics.LinearVelocity + owner.Physics.AngularVelocity.Cross(start - ownerCenter);
+            }
         }
 
         public override void UpdateTick(double deltaTime)
@@ -31,8 +44,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 float dummyNaturalGravityInterference;
                 Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Raycast.From, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
 
-                // Update velocity based on gravity acceleration
-                Velocity += gravity * deltaTime;
+                Velocity += (gravity + Raycast.Direction * Definition.PhysicalProjectileDef.Acceleration) * deltaTime;
 
                 // Raycast.From represents the projectile's position.
                 Raycast.From += (InheritedVelocity + Velocity) * deltaTime;

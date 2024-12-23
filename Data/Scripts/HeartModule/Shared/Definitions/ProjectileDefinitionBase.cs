@@ -159,8 +159,8 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(4)] public string ImpactSound;
         [ProtoMember(5)] public float SoundChance;
 
-        public bool HasTravelSound => !TravelSound?.Equals("") ?? false && SoundChance > 0 && TravelMaxDistance > 0 && TravelVolume > 0;
-        public bool HasImpactSound => !ImpactSound?.Equals("") ?? false && SoundChance > 0;
+        public bool HasTravelSound => (!TravelSound?.Equals("") ?? false) && SoundChance > 0 && TravelMaxDistance > 0 && TravelVolume > 0;
+        public bool HasImpactSound => (!ImpactSound?.Equals("") ?? false) && SoundChance > 0;
         public MySoundPair TravelSoundPair => new MySoundPair(TravelSound);
         public MySoundPair ImpactSoundPair => new MySoundPair(ImpactSound);
     }

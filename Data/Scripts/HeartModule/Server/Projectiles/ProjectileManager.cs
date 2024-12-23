@@ -1,14 +1,28 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Networking;
+using VRageMath;
 
 namespace Orrery.HeartModule.Server.Projectiles
 {
     internal class ProjectileManager
     {
+        private static ProjectileManager _;
+
         private readonly HashSet<HitscanProjectile> _projectiles = new HashSet<HitscanProjectile>();
         private readonly List<HitscanProjectile> _deadProjectiles = new List<HitscanProjectile>();
         private uint _maxProjectileId = 0;
+
+        public ProjectileManager()
+        {
+            _ = this;
+        }
+
+        public void Close()
+        {
+            _ = null;
+        }
 
         public void Update()
         {
@@ -31,14 +45,42 @@ namespace Orrery.HeartModule.Server.Projectiles
             _deadProjectiles.Clear();
         }
 
-        public void SpawnProjectile(HitscanProjectile projectile)
+        public static void SpawnProjectile(HitscanProjectile projectile)
         {
-            projectile.Id = _maxProjectileId++;
-            _projectiles.Add(projectile);
+            projectile.Id = _._maxProjectileId++;
+            _._projectiles.Add(projectile);
 
             ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Raycast.From);
         }
 
-        public int ActiveProjectiles => _projectiles.Count;
+        public static int ActiveProjectiles => _._projectiles.Count;
+
+        public static void CloseProjectile(HitscanProjectile projectile)
+        {
+            _._deadProjectiles.Add(projectile);
+        }
+
+        public static IEnumerable<PhysicalProjectile> GetProjectilesInSphere(BoundingSphereD sphere)
+        {
+            return _._projectiles.Where(p =>
+                p is PhysicalProjectile && ((PhysicalProjectile) p).Health > 0 && Vector3D.DistanceSquared(p.Raycast.From, sphere.Center) <=
+                (p.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius) *
+                (p.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius)).Select(p => p as PhysicalProjectile);
+        }
+
+        public static IEnumerable<PhysicalProjectile> GetProjectilesInLine(LineD line)
+        {
+            RayD ray = new RayD(line.From, line.Direction);
+            BoundingSphereD sphere = new BoundingSphereD();
+            return _._projectiles.Where(p =>
+            {
+                var projectile = p as PhysicalProjectile;
+                if (projectile == null || projectile.Health <= 0)
+                    return false;
+                sphere.Center = p.Raycast.From;
+                sphere.Radius = p.Definition.PhysicalProjectileDef.ProjectileSize;
+                return (sphere.Intersects(ray) ?? double.MaxValue) <= line.Length;
+            }).Select(p => p as PhysicalProjectile);
+        }
     }
 }
