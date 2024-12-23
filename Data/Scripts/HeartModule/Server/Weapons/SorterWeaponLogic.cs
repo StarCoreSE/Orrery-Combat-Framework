@@ -24,12 +24,15 @@ namespace Orrery.HeartModule.Server.Weapons
         internal Dictionary<string, IMyModelDummy> MuzzleDummies = new Dictionary<string, IMyModelDummy>();
         internal SubpartManager SubpartManager = new SubpartManager();
         internal MatrixD MuzzleMatrix = MatrixD.Identity;
+        internal WeaponLogicMagazines Magazine;
 
         public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, uint id)
         {
             SorterWep = sorterWep;
             Definition = definition;
             Id = id;
+
+            Magazine = new WeaponLogicMagazines(this, null); // TODO GetInventoryFunc
 
             sorterWep.OnClose += ent => WeaponManager.RemoveWeapon(Id);
 
@@ -46,8 +49,7 @@ namespace Orrery.HeartModule.Server.Weapons
                 if (Definition.Assignments.HasMuzzleSubpart)
                 {
                     var muzzleSubpart = SubpartManager.RecursiveGetSubpart(SorterWep, Definition.Assignments.MuzzleSubpart);
-                    if (muzzleSubpart != null)
-                        ((IMyEntity)muzzleSubpart).Model?.GetDummies(MuzzleDummies);
+                    ((IMyEntity)muzzleSubpart)?.Model?.GetDummies(MuzzleDummies);
                 }
                 else
                 {
@@ -75,6 +77,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
                 if (!SorterWep.IsWorking) // Don't try shoot if the turret is disabled
                     return;
+                Magazine.UpdateReload();
                 TryShoot();
             }
             catch (Exception ex)
@@ -111,6 +114,9 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public virtual void TryShoot()
         {
+            // TODO: Clean up the logic on this
+            // TODO: Re-introduce magazines and random values; they don't need to be synced because the client isn't real.
+
             float modifiedRateOfFire = Definition.Loading.RateOfFire;
 
             if (lastShoot < 60)
@@ -126,48 +132,57 @@ namespace Orrery.HeartModule.Server.Weapons
                 delayCounter = Definition.Loading.DelayUntilFire;
             }
 
-            if ((ShootState || AutoShoot) &&          // Is allowed to shoot
-                lastShoot >= 60 &&                          // Fire rate is ready
+            if ((ShootState || AutoShoot) && // Is allowed to shoot
+                lastShoot >= 60 &&           // Fire rate is ready
+                Magazine.IsLoaded &&         // Magazine is loaded
                 delayCounter <= 0)
             {
-                while (lastShoot >= 60) // Allows for firerates higher than 60 rps
+                while (lastShoot >= 60 && Magazine.IsLoaded) // Allows for firerates higher than 60 rps
                 {
-                    ProjectileDefinitionBase ammoDef =
-                        DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[0]];
-                    for (int i = 0; i < Definition.Loading.BarrelsPerShot; i++)
-                    {
-                        NextMuzzleIdx++;
-                        NextMuzzleIdx %= Definition.Assignments.Muzzles.Length;
-
-                        MatrixD muzzleMatrix = CalcMuzzleMatrix(NextMuzzleIdx);
-                        Vector3D muzzlePos = muzzleMatrix.Translation;
-
-                        for (int j = 0; j < Definition.Loading.ProjectilesPerBarrel; j++)
-                        {
-                            if (MyAPIGateway.Session.IsServer)
-                            {
-                                SorterWep.CubeGrid.Physics?.ApplyImpulse(muzzleMatrix.Backward * ammoDef.UngroupedDef.Recoil, muzzleMatrix.Translation);
-                                var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep);
-
-                                //if (newProjectile == null) // Emergency failsafe
-                                //    return;
-                                //
-                                //if (newProjectile.Guidance != null) // Assign target for self-guided projectiles
-                                //{
-                                //    if (this is SorterTurretLogic)
-                                //        newProjectile.Guidance.SetTarget(((SorterTurretLogic)this).TargetEntity);
-                                //    else
-                                //        newProjectile.Guidance.SetTarget(WeaponManagerAi.I.GetTargeting(SorterWep.CubeGrid)?.PrimaryGridTarget);
-                                //}
-                            }
-                        }
-
-                        lastShoot -= 60f;
-                        if (lastShoot < 60)
-                            break;
-                    }
+                    FireOnce();
                 }
             }
+        }
+
+        /// <summary>
+        /// Fires a single shot with no safety checks.
+        /// </summary>
+        internal virtual void FireOnce()
+        {
+            ProjectileDefinitionBase ammoDef =
+                DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[0]];
+
+            for (int i = 0; i < Definition.Loading.BarrelsPerShot; i++)
+            {
+                NextMuzzleIdx++;
+                NextMuzzleIdx %= Definition.Assignments.Muzzles.Length;
+
+                var muzzleMatrix = CalcMuzzleMatrix(NextMuzzleIdx);
+                var muzzlePos = muzzleMatrix.Translation;
+
+                for (int j = 0; j < Definition.Loading.ProjectilesPerBarrel; j++)
+                {
+                    SorterWep.CubeGrid.Physics?.ApplyImpulse(muzzleMatrix.Backward * ammoDef.UngroupedDef.Recoil, muzzleMatrix.Translation);
+                    var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep);
+
+                    //if (newProjectile == null) // Emergency failsafe
+                    //    return;
+                    //
+                    //if (newProjectile.Guidance != null) // Assign target for self-guided projectiles
+                    //{
+                    //    if (this is SorterTurretLogic)
+                    //        newProjectile.Guidance.SetTarget(((SorterTurretLogic)this).TargetEntity);
+                    //    else
+                    //        newProjectile.Guidance.SetTarget(WeaponManagerAi.I.GetTargeting(SorterWep.CubeGrid)?.PrimaryGridTarget);
+                    //}
+                }
+
+                lastShoot -= 60f;
+                if (lastShoot < 60)
+                    break;
+            }
+
+            Magazine.UseShot();
         }
     }
 }

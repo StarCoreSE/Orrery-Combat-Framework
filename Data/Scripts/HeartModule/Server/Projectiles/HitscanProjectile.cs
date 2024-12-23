@@ -149,7 +149,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 foreach (var projectile in collidedProjectiles)
                 {
-                    if (!IsActive || projectile.Owner == Owner)
+                    if (!IsActive || projectile == this || projectile.Owner == Owner || projectile.Definition.PhysicalProjectileDef.Health <= 0)
                         break;
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
                     HitCount++;

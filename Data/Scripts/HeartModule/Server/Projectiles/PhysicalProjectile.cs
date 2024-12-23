@@ -24,7 +24,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             set
             {
                 _health = value;
-                if (_health <= 0)
+                if (_health <= 0 && Definition.PhysicalProjectileDef.Health > 0)
                     ProjectileManager.CloseProjectile(this);
             }
         }

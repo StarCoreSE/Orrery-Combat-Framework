@@ -40,7 +40,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             MaxBeamLength = 0;
             if (Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
-                GlobalEffects.AddLine(Raycast.From, Raycast.From - Raycast.Direction * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+                GlobalEffects.AddLine(Raycast.From, Raycast.From - Velocity.Normalized() * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
 
             base.UpdateDraw(deltaTime);
         }
