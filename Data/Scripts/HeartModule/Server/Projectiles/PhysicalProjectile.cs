@@ -12,7 +12,23 @@ namespace Orrery.HeartModule.Server.Projectiles
     {
         public Vector3D InheritedVelocity = Vector3D.Zero;
         public Vector3D Velocity;
-        public float Health;
+
+        private float _health;
+
+        public float Health
+        {
+            get
+            {
+                return _health;
+            }
+            set
+            {
+                _health = value;
+                if (_health <= 0)
+                    ProjectileManager.CloseProjectile(this);
+            }
+        }
+
         public double DistanceTravelled { get; private set; } = 0;
 
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)

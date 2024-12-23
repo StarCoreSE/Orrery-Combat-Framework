@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Orrery.HeartModule.Server.Networking;
+using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
+using VRage.ModAPI;
 using VRageMath;
 
 namespace Orrery.HeartModule.Server.Projectiles
@@ -32,7 +34,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 if (projectile.Definition.NetworkingDef.DoConstantSync) // TODO: Smart (rate-limited) network syncing
                     ServerNetwork.SendToEveryoneInSync((SerializedSyncProjectile) projectile, projectile.Raycast.From);
 
-                if (!projectile.IsActive)
+                if (!projectile.IsActive || projectile.Definition.PhysicalProjectileDef.IsHitscan)
                     _deadProjectiles.Add(projectile);
             }
 
@@ -51,6 +53,18 @@ namespace Orrery.HeartModule.Server.Projectiles
             _._projectiles.Add(projectile);
 
             ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Raycast.From);
+        }
+
+        public static HitscanProjectile SpawnProjectile(ProjectileDefinitionBase definition, Vector3D position, Vector3D direction, IMyEntity owner = null)
+        {
+            HitscanProjectile projectile;
+            if (definition.PhysicalProjectileDef.IsHitscan)
+                projectile = new HitscanProjectile(definition, position, direction, owner);
+            else
+                projectile = new PhysicalProjectile(definition, position, direction, owner);
+
+            SpawnProjectile(projectile);
+            return projectile;
         }
 
         public static int ActiveProjectiles => _._projectiles.Count;

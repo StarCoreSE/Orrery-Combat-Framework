@@ -1,11 +1,10 @@
 ﻿using System;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Server.Projectiles;
-using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Server.Weapons;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
-using VRageMath;
 
 namespace Orrery.HeartModule.Server
 {
@@ -15,6 +14,7 @@ namespace Orrery.HeartModule.Server
         public static ServerBase I;
         private ServerNetwork _network = new ServerNetwork();
         private ProjectileManager _projectileManager = new ProjectileManager();
+        private WeaponManager _weaponManager;
 
         public override void LoadData()
         {
@@ -23,6 +23,7 @@ namespace Orrery.HeartModule.Server
             
             I = this;
             _network.LoadData();
+            _weaponManager = new WeaponManager();
 
             HeartLog.Info("ServerBase initialized.");
         }
@@ -34,6 +35,7 @@ namespace Orrery.HeartModule.Server
 
             _network.UnloadData();
             _projectileManager.Close();
+            _weaponManager.Close();
             I = null;
 
             HeartLog.Info("ServerBase closed.");
@@ -49,13 +51,6 @@ namespace Orrery.HeartModule.Server
             {
                 _network.Update();
                 _projectileManager.Update();
-
-                if (_ticks++ % 30 == 0)
-                {
-                    PhysicalProjectile p = new PhysicalProjectile(DefinitionManager.ProjectileDefinitions["testdef"], MyAPIGateway.Session.Player.GetPosition(), MyAPIGateway.Session.Player.Character.WorldMatrix.Forward, MyAPIGateway.Session.Player.Character);
-
-                    ProjectileManager.SpawnProjectile(p);
-                }
 
                 MyAPIGateway.Utilities.ShowNotification($"Server: {ProjectileManager.ActiveProjectiles}", 1000/60);
             }

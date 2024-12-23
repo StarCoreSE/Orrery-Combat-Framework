@@ -84,7 +84,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 }
 
                 // Ignore owner
-                if (Owner != null && e.Element.IsEntityInHierarchy(Owner))
+                if (Owner != null && e.Element == Owner)
                     continue;
 
                 if (!(e.Element is MyCubeGrid))
@@ -121,7 +121,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                     }
                 }
 
-                if (closestBlock != null)
+                if (closestBlock != null && (closestBlock.FatBlock == null || closestBlock.FatBlock != Owner))
                 {
                     int prevHitCount = HitCount;
 
@@ -149,7 +149,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 foreach (var projectile in collidedProjectiles)
                 {
-                    if (!IsActive)
+                    if (!IsActive || projectile.Owner == Owner)
                         break;
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
                     HitCount++;

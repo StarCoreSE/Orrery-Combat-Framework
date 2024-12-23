@@ -12,6 +12,7 @@ namespace Orrery.HeartModule.Shared.Definitions
     {
         public WeaponDefinitionBase() { }
 
+        [ProtoMember(1)] public string Name;
         [ProtoMember(2)] public Targeting Targeting;
         [ProtoMember(3)] public Assignments Assignments;
         [ProtoMember(4)] public Hardpoint Hardpoint;

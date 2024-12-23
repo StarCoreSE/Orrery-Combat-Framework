@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Net;
 using Orrery.HeartModule.Shared.Logging;
+using Sandbox.ModAPI;
 using VRage.Game;
 
 namespace Orrery.HeartModule.Shared.Definitions
@@ -85,6 +86,8 @@ namespace Orrery.HeartModule.Shared.Definitions
                 case 0:
                     WeaponDefinitions[definitionId] = DefinitionApi.GetDefinition<WeaponDefinitionBase>(definitionId);
                     HeartLog.Info("Registered new weapon definition " + definitionId);
+                    if (!MyAPIGateway.Utilities.IsDedicated)
+                        Client.Interface.BlockCategoryManager.RegisterFromDefinition(WeaponDefinitions[definitionId]);
                     break;
                 case 1:
                     WeaponDefinitions.Remove(definitionId); // TODO cleanup existing turrets/projectiles

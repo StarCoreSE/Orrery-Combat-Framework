@@ -2,6 +2,7 @@
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using System;
+using Orrery.HeartModule.Client.Interface;
 using Orrery.HeartModule.Client.Projectiles;
 using VRage.Game.Components;
 
@@ -19,6 +20,7 @@ namespace Orrery.HeartModule.Client
                 return;
 
             _network.LoadData();
+            BlockCategoryManager.Init();
 
             HeartLog.Info("ClientBase initialized.");
         }
@@ -28,6 +30,7 @@ namespace Orrery.HeartModule.Client
             if (MyAPIGateway.Utilities.IsDedicated)
                 return;
 
+            BlockCategoryManager.Close();
             _projectileManager.Close();
             _network.UnloadData();
 
