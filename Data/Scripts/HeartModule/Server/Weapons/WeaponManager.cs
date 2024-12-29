@@ -40,7 +40,13 @@ namespace Orrery.HeartModule.Server.Weapons
 
         private void AddWeapon(IMyConveyorSorter sorter, WeaponDefinitionBase definition)
         {
-            SorterWeaponLogic logic = new SorterWeaponLogic(sorter, definition, sorter.EntityId);
+            SorterWeaponLogic logic;
+
+            if (definition.Assignments.HasAzimuth && definition.Assignments.HasElevation)
+                logic = new SorterTurretLogic(sorter, definition, sorter.EntityId);
+            else
+                logic = new SorterWeaponLogic(sorter, definition, sorter.EntityId);
+
             _weapons.Add(logic.Id, logic);
         }
 

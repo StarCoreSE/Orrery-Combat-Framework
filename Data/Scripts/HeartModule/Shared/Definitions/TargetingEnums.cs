@@ -1,5 +1,8 @@
-﻿namespace Orrery.HeartModule.Shared.Definitions
+﻿using System;
+
+namespace Orrery.HeartModule.Shared.Definitions
 {
+    [Flags]
     public enum IFFEnum
     {
         None = 0,
@@ -10,6 +13,7 @@
         TargetUnique = 16,
     }
 
+    [Flags]
     public enum TargetTypeEnum
     {
         None = 0,
