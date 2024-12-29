@@ -4,6 +4,8 @@ using Sandbox.ModAPI;
 using System;
 using Orrery.HeartModule.Client.Interface;
 using Orrery.HeartModule.Client.Projectiles;
+using Orrery.HeartModule.Client.Weapons;
+using Orrery.HeartModule.Client.Weapons.Controls;
 using VRage.Game.Components;
 
 namespace Orrery.HeartModule.Client
@@ -12,7 +14,8 @@ namespace Orrery.HeartModule.Client
     internal class ClientBase : MySessionComponentBase
     {
         private ClientNetwork _network = new ClientNetwork();
-        private ProjectileManager _projectileManager = new ProjectileManager();
+        private WeaponManager _weaponManager;
+        private ProjectileManager _projectileManager;
 
         public override void LoadData()
         {
@@ -21,6 +24,8 @@ namespace Orrery.HeartModule.Client
 
             _network.LoadData();
             BlockCategoryManager.Init();
+            _weaponManager = new WeaponManager();
+            _projectileManager = new ProjectileManager();
 
             HeartLog.Info("ClientBase initialized.");
         }
@@ -32,6 +37,7 @@ namespace Orrery.HeartModule.Client
 
             BlockCategoryManager.Close();
             _projectileManager.Close();
+            _weaponManager.Close();
             _network.UnloadData();
 
             HeartLog.Info("ClientBase closed.");
@@ -44,6 +50,12 @@ namespace Orrery.HeartModule.Client
 
             try
             {
+                if (!SorterWeaponTerminalControls.Done)
+                {
+                    HideSorterControls.DoOnce();
+                    SorterWeaponTerminalControls.DoOnce(ModContext);
+                }
+
                 _network.Update();
                 _projectileManager.Update();
                 MyAPIGateway.Utilities.ShowNotification($"Client: {ProjectileManager.ActiveProjectiles}", 1000/60);

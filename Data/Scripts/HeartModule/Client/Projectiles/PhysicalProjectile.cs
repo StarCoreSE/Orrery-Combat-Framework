@@ -33,7 +33,7 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             #endregion
 
-            base.Update();
+            base.Update(deltaTime);
         }
 
         public override void UpdateDraw(double deltaTime = 1/60d)

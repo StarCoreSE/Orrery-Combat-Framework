@@ -13,7 +13,7 @@ namespace Orrery.HeartModule.Server
     {
         public static ServerBase I;
         private ServerNetwork _network = new ServerNetwork();
-        private ProjectileManager _projectileManager = new ProjectileManager();
+        private ProjectileManager _projectileManager;
         private WeaponManager _weaponManager;
 
         public override void LoadData()
@@ -24,6 +24,7 @@ namespace Orrery.HeartModule.Server
             I = this;
             _network.LoadData();
             _weaponManager = new WeaponManager();
+            _projectileManager = new ProjectileManager();
 
             HeartLog.Info("ServerBase initialized.");
         }

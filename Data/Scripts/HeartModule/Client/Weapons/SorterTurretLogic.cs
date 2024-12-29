@@ -1,8 +1,10 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.WeaponSettings;
 using Sandbox.ModAPI;
+using VRage.Game.Components;
+using VRage.Network;
 
-namespace Orrery.HeartModule.Server.Weapons
+namespace Orrery.HeartModule.Client.Weapons
 {
     internal class SorterTurretLogic : SorterWeaponLogic
     {
@@ -18,7 +20,7 @@ namespace Orrery.HeartModule.Server.Weapons
             }
         }
 
-        public SorterTurretLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, uint id) : base(sorterWep, definition, id)
+        public SorterTurretLogic(IMyConveyorSorter block, WeaponDefinitionBase definition, long id) : base(block, definition, id)
         {
             Settings = new TurretSettings();
         }

@@ -17,5 +17,6 @@ namespace Orrery.HeartModule
         public int SyncRangeSq = MyAPIGateway.Session.SessionSettings.SyncDistance * MyAPIGateway.Session.SessionSettings.SyncDistance;
         public bool IsPaused = false;
         public Random Random = new Random();
+        public readonly Guid HeartSettingsGUID = new Guid("06edc546-3e42-41f3-bc72-1d640035fbf2");
     }
 }

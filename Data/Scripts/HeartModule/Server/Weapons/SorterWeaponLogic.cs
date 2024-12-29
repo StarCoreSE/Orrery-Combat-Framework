@@ -6,12 +6,12 @@ using System;
 using System.Collections.Generic;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Utility;
+using Orrery.HeartModule.Shared.WeaponSettings;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Network;
 using VRageMath;
-using VRage.Library.Utils;
 
 namespace Orrery.HeartModule.Server.Weapons
 {
@@ -19,14 +19,15 @@ namespace Orrery.HeartModule.Server.Weapons
     {
         public readonly IMyConveyorSorter SorterWep;
         public readonly WeaponDefinitionBase Definition;
-        public readonly uint Id;
+        public readonly long Id;
 
         internal Dictionary<string, IMyModelDummy> MuzzleDummies = new Dictionary<string, IMyModelDummy>();
         internal SubpartManager SubpartManager = new SubpartManager();
         internal MatrixD MuzzleMatrix = MatrixD.Identity;
         internal WeaponLogicMagazines Magazine;
+        internal WeaponSettings Settings = new WeaponSettings();
 
-        public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, uint id)
+        public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id)
         {
             SorterWep = sorterWep;
             Definition = definition;
@@ -59,6 +60,9 @@ namespace Orrery.HeartModule.Server.Weapons
                 SorterWep.SlimBlock.BlockGeneralDamageModifier = Definition?.Assignments.DurabilityModifier ?? 1f;
 
                 SorterWep.ResourceSink.SetRequiredInputByType(MyResourceDistributorComponent.ElectricityId, Definition?.Hardpoint.IdlePower ?? 0f);
+
+                LoadSettings();
+                SaveSettings();
             }
             catch (Exception ex)
             {
@@ -70,7 +74,7 @@ namespace Orrery.HeartModule.Server.Weapons
         {
             try
             {
-                if (MarkedForClose || Id == uint.MaxValue || SorterWep == null)
+                if (MarkedForClose || SorterWep == null)
                     return;
 
                 MuzzleMatrix = CalcMuzzleMatrix(0); // Set stored MuzzleMatrix
@@ -110,12 +114,11 @@ namespace Orrery.HeartModule.Server.Weapons
         public float delayCounter = 0f; // TODO sync
 
         private bool AutoShoot = true;
-        private bool ShootState = true;
 
         public virtual void TryShoot()
         {
             // TODO: Clean up the logic on this
-            // TODO: Re-introduce magazines and random values; they don't need to be synced because the client isn't real.
+            // TODO: Re-introduce random values; they don't need to be synced because the client isn't real.
 
             float modifiedRateOfFire = Definition.Loading.RateOfFire;
 
@@ -123,16 +126,16 @@ namespace Orrery.HeartModule.Server.Weapons
                 lastShoot += modifiedRateOfFire; // Use the modified rate of fire
 
             // Manage fire delay. If there is an easier way to do this, TODO implement
-            if ((ShootState || AutoShoot) && delayCounter > 0)
+            if ((Settings.ShootState || AutoShoot) && delayCounter > 0)
             {
                 delayCounter -= 1 / 60f;
             }
-            else if (!(ShootState || AutoShoot) && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
+            else if (!(Settings.ShootState || AutoShoot) && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
             {
                 delayCounter = Definition.Loading.DelayUntilFire;
             }
 
-            if ((ShootState || AutoShoot) && // Is allowed to shoot
+            if ((Settings.ShootState || AutoShoot) && // Is allowed to shoot
                 lastShoot >= 60 &&           // Fire rate is ready
                 Magazine.IsLoaded &&         // Magazine is loaded
                 delayCounter <= 0)
@@ -184,5 +187,91 @@ namespace Orrery.HeartModule.Server.Weapons
 
             Magazine.UseShot();
         }
+
+
+        #region Settings Saving
+
+        void SaveSettings()
+        {
+            if (SorterWep == null)
+                return; // called too soon or after it was already closed, ignore
+
+            if (Settings == null)
+                throw new NullReferenceException($"Settings == null on entId={Entity?.EntityId}; Test log 1");
+
+            if (SorterWep.Storage == null)
+                SorterWep.Storage = new MyModStorageComponent();
+
+            SorterWep.Storage.SetValue(HeartData.I.HeartSettingsGUID, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Settings)));
+
+            //MyAPIGateway.Utilities.ShowNotification(SettingsBlockRange.ToString(), 1000, "Red");
+        }
+
+        internal virtual void LoadDefaultSettings()
+        {
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+
+            Settings.ShootState = false;
+            Settings.AmmoLoadedIdx = Magazine.SelectedAmmoIndex;
+            Settings.HudBarrelIndicatorState = false;
+        }
+
+        internal virtual bool LoadSettings()
+        {
+            if (SorterWep.Storage == null)
+            {
+                LoadDefaultSettings();
+                return false;
+            }
+
+
+            string rawData;
+            if (!SorterWep.Storage.TryGetValue(HeartData.I.HeartSettingsGUID, out rawData))
+            {
+                LoadDefaultSettings();
+                return false;
+            }
+
+            try
+            {
+                var loadedSettings = MyAPIGateway.Utilities.SerializeFromBinary<WeaponSettings>(Convert.FromBase64String(rawData));
+
+                if (loadedSettings != null)
+                {
+                    Settings.ShootState = loadedSettings.ShootState;
+
+                    Settings.AmmoLoadedIdx = loadedSettings.AmmoLoadedIdx;
+                    Magazine.SelectedAmmoIndex = loadedSettings.AmmoLoadedIdx;
+
+                    Settings.HudBarrelIndicatorState = loadedSettings.HudBarrelIndicatorState;
+
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                SoftHandle.RaiseException(e, typeof(SorterWeaponLogic));
+            }
+
+            return false;
+        }
+
+        public override bool IsSerialized()
+        {
+            try
+            {
+                SaveSettings();
+                //MyAPIGateway.Utilities.ShowNotification("AAAHH I'M SERIALIZING AAAHHHHH", 2000, "Red");
+            }
+            catch (Exception e)
+            {
+                //should probably log this tbqh
+            }
+
+            return base.IsSerialized();
+        }
+
+        #endregion
     }
 }

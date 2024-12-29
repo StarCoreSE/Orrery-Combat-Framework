@@ -1,13 +1,13 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Orrery.HeartModule.Shared.Definitions;
+﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using System.Collections.Generic;
+using System.Linq;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 
-namespace Orrery.HeartModule.Server.Weapons
+namespace Orrery.HeartModule.Client.Weapons
 {
     /// <summary>
     /// Creates and manages weapon objects.
@@ -25,7 +25,7 @@ namespace Orrery.HeartModule.Server.Weapons
             MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
             MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
 
-            HeartLog.Info("WeaponManager initialized.");
+            HeartLog.Info("Client WeaponManager initialized.");
         }
         public void Close()
         {
@@ -33,7 +33,7 @@ namespace Orrery.HeartModule.Server.Weapons
             MyAPIGateway.Entities.OnEntityAdd -= OnEntityAdd;
 
             _ = null;
-            HeartLog.Info("WeaponManager closed.");
+            HeartLog.Info("Client WeaponManager closed.");
         }
 
         #region Blocks

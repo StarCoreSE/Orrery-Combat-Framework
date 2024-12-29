@@ -15,8 +15,4 @@
     <PackageReference Include="Mal.Mdk2.References" Version="*" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Data\Scripts\HeartModule\Client\Weapons\" />
-  </ItemGroup>
-
 </Project>
