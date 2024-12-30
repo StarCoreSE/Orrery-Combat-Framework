@@ -20,9 +20,9 @@ namespace Orrery.HeartModule.Client.Weapons
             }
         }
 
-        public SorterTurretLogic(IMyConveyorSorter block, WeaponDefinitionBase definition, long id) : base(block, definition, id)
+        public SorterTurretLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {
-            Settings = new TurretSettings();
+            Settings = new TurretSettings(sorterWep.EntityId);
         }
     }
 }

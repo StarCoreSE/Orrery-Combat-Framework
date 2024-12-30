@@ -50,6 +50,11 @@ namespace Orrery.HeartModule.Client.Weapons
             _weapons.Add(logic.Id, logic);
         }
 
+        internal static SorterWeaponLogic GetWeapon(long id)
+        {
+            return _?._weapons.GetValueOrDefault(id, null);
+        }
+
         internal static void RemoveWeapon(long id)
         {
             _?._weapons.Remove(id);

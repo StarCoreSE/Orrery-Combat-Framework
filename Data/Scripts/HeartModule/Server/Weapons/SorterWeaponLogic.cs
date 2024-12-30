@@ -25,7 +25,7 @@ namespace Orrery.HeartModule.Server.Weapons
         internal SubpartManager SubpartManager = new SubpartManager();
         internal MatrixD MuzzleMatrix = MatrixD.Identity;
         internal WeaponLogicMagazines Magazine;
-        internal WeaponSettings Settings = new WeaponSettings();
+        internal WeaponSettings Settings;
 
         public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id)
         {
@@ -39,6 +39,8 @@ namespace Orrery.HeartModule.Server.Weapons
 
             sorterWep.GameLogic.Container.Add(this);
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+
+            Settings = new WeaponSettings(sorterWep.EntityId);
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -63,6 +65,8 @@ namespace Orrery.HeartModule.Server.Weapons
 
                 LoadSettings();
                 SaveSettings();
+
+                Settings.Sync();
             }
             catch (Exception ex)
             {
@@ -113,8 +117,6 @@ namespace Orrery.HeartModule.Server.Weapons
         public int NextMuzzleIdx = 0; // For alternate firing
         public float delayCounter = 0f; // TODO sync
 
-        private bool AutoShoot = true;
-
         public virtual void TryShoot()
         {
             // TODO: Clean up the logic on this
@@ -126,16 +128,16 @@ namespace Orrery.HeartModule.Server.Weapons
                 lastShoot += modifiedRateOfFire; // Use the modified rate of fire
 
             // Manage fire delay. If there is an easier way to do this, TODO implement
-            if ((Settings.ShootState || AutoShoot) && delayCounter > 0)
+            if (Settings.ShootState && delayCounter > 0)
             {
                 delayCounter -= 1 / 60f;
             }
-            else if (!(Settings.ShootState || AutoShoot) && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
+            else if (!Settings.ShootState && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
             {
                 delayCounter = Definition.Loading.DelayUntilFire;
             }
 
-            if ((Settings.ShootState || AutoShoot) && // Is allowed to shoot
+            if (Settings.ShootState && // Is allowed to shoot
                 lastShoot >= 60 &&           // Fire rate is ready
                 Magazine.IsLoaded &&         // Magazine is loaded
                 delayCounter <= 0)

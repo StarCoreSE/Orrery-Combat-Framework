@@ -5,14 +5,33 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
     [ProtoContract]
     internal class TurretSettings : WeaponSettings
     {
-        [ProtoMember(3)]
-        public float AiRange;
+        public TurretSettings(long weaponId) : base(weaponId)
+        {
+        }
+
+        /// <summary>
+        /// DON'T USE THIS.
+        /// </summary>
+        internal TurretSettings() { }
+
+        public float AiRange
+        {
+            get
+            {
+                return _aiRange;
+            }
+            set
+            {
+                _aiRange = value;
+                Sync();
+            }
+        }
 
         [ProtoMember(4)]
-        internal int TargetStateContainer;
+        private float _aiRange;
 
         [ProtoMember(5)]
-        public long ControlTypeState;
+        internal int TargetStateContainer;
 
         #region TargetingStates
 
@@ -25,6 +44,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetGrids, value);
+                Sync();
             }
         }
 
@@ -37,6 +57,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetSmallGrids, value);
+                Sync();
             }
         }
 
@@ -49,6 +70,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetLargeGrids, value);
+                Sync();
             }
         }
 
@@ -61,6 +83,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetCharacters, value);
+                Sync();
             }
         }
 
@@ -73,6 +96,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetProjectiles, value);
+                Sync();
             }
         }
 
@@ -85,6 +109,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetEnemies, value);
+                Sync();
             }
         }
 
@@ -97,6 +122,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetFriendlies, value);
+                Sync();
             }
         }
 
@@ -109,6 +135,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetNeutrals, value);
+                Sync();
             }
         }
 
@@ -121,6 +148,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetUnowned, value);
+                Sync();
             }
         }
 
@@ -133,10 +161,16 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 CompressValue(ref TargetStateContainer, TargetingSettingStates.PreferUniqueTarget, value);
+                Sync();
             }
         }
 
         #endregion
+
+        public override string ToString()
+        {
+            return base.ToString() + $"\nAiRange: {AiRange}\nTargetState: {TargetStateContainer}";
+        }
 
         private static class TargetingSettingStates
         {
