@@ -41,6 +41,11 @@ namespace Orrery.HeartModule.Server.Projectiles
                 Vector3D ownerCenter;
                 if (owner is IMyCharacter)
                     ownerCenter = owner.Physics.Center;
+                else if (owner is IMyConveyorSorter)
+                {
+                    owner = ((IMyConveyorSorter)owner).CubeGrid;
+                    ownerCenter = owner.Physics.CenterOfMassWorld;
+                }
                 else
                     ownerCenter = owner.Physics.CenterOfMassWorld;
 

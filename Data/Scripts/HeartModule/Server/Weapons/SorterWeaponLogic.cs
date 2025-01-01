@@ -78,7 +78,7 @@ namespace Orrery.HeartModule.Server.Weapons
         {
             try
             {
-                if (MarkedForClose || SorterWep == null)
+                if (MarkedForClose || SorterWep == null || !SorterWep.IsWorking)
                     return;
 
                 MuzzleMatrix = CalcMuzzleMatrix(0); // Set stored MuzzleMatrix
@@ -122,6 +122,10 @@ namespace Orrery.HeartModule.Server.Weapons
         float lastShoot = 0;
         public int NextMuzzleIdx = 0; // For alternate firing
         public float delayCounter = 0f; // TODO sync
+        /// <summary>
+        /// Automatic firing that ignores settings.
+        /// </summary>
+        public bool AutoShoot = false;
 
         public virtual void TryShoot()
         {
@@ -134,16 +138,16 @@ namespace Orrery.HeartModule.Server.Weapons
                 lastShoot += modifiedRateOfFire; // Use the modified rate of fire
 
             // Manage fire delay. If there is an easier way to do this, TODO implement
-            if (Settings.ShootState && delayCounter > 0)
+            if ((Settings.ShootState || AutoShoot) && delayCounter > 0)
             {
                 delayCounter -= 1 / 60f;
             }
-            else if (!Settings.ShootState && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
+            else if (!(Settings.ShootState || AutoShoot) && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
             {
                 delayCounter = Definition.Loading.DelayUntilFire;
             }
 
-            if (Settings.ShootState && // Is allowed to shoot
+            if ((Settings.ShootState || AutoShoot) && // Is allowed to shoot
                 lastShoot >= 60 &&           // Fire rate is ready
                 Magazine.IsLoaded &&         // Magazine is loaded
                 delayCounter <= 0)
