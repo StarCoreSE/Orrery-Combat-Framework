@@ -35,10 +35,10 @@ namespace Orrery.HeartModule.Server.Weapons
 
             Magazine = new WeaponLogicMagazines(this, null); // TODO GetInventoryFunc
 
-            sorterWep.OnClose += ent => WeaponManager.RemoveWeapon(Id);
-
             sorterWep.GameLogic.Container.Add(this);
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
+
+            SorterWep.OnClosing += OnClosing;
 
             Settings = new WeaponSettings(sorterWep.EntityId);
         }
@@ -92,6 +92,12 @@ namespace Orrery.HeartModule.Server.Weapons
             {
                 SoftHandle.RaiseException(ex, typeof(SorterWeaponLogic));
             }
+        }
+
+        public void OnClosing(IMyEntity entity)
+        {
+            WeaponManager.RemoveWeapon(Id);
+            MarkedForClose = true;
         }
 
         public virtual MatrixD CalcMuzzleMatrix(int id, bool local = false)
