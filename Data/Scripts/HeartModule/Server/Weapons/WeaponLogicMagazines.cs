@@ -1,6 +1,7 @@
 ﻿using System;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
+using Orrery.HeartModule.Shared.WeaponSettings;
 using Sandbox.Game;
 using Sandbox.ModAPI;
 using VRage.Game;
@@ -13,40 +14,21 @@ namespace Orrery.HeartModule.Server.Weapons
     {
         Loading Definition;
         Audio DefinitionAudio;
+        private SorterWeaponLogic _weapon;
         private readonly Func<IMyInventory> GetInventoryFunc;
 
-        private int _selectedAmmoIndex = 0;
-        private int shotsPerMag = 0;
-
+        private int ShotsPerMag => CurrentAmmo.UngroupedDef.ShotsPerMagazine;
         public ProjectileDefinitionBase CurrentAmmo => DefinitionManager.ProjectileDefinitions[Definition.Ammos[SelectedAmmoIndex]];
-
-        public int SelectedAmmoIndex
-        {
-            get
-            {
-                return _selectedAmmoIndex;
-            }
-            set
-            {
-                if (Definition.Ammos.Length <= value || value < 0)
-                    return;
-                _selectedAmmoIndex = value;
-                shotsPerMag = CurrentAmmo.UngroupedDef.ShotsPerMagazine;
-
-                if (value == _selectedAmmoIndex)
-                    return;
-                EmptyMagazines();
-            }
-        }
+        public byte SelectedAmmoIndex => _weapon.Settings?.AmmoLoadedIdx ?? 0;
 
         public WeaponLogicMagazines(SorterWeaponLogic weapon, Func<IMyInventory> getInventoryFunc, bool startLoaded = false)
         {
             Definition = weapon.Definition.Loading;
             DefinitionAudio = weapon.Definition.Audio;
             GetInventoryFunc = getInventoryFunc;
+            _weapon = weapon;
             RemainingReloads = Definition.MaxReloads;
             NextReloadTime = Definition.ReloadTime;
-            SelectedAmmoIndex = 0;
             if (startLoaded)
             {
                 MagazinesLoaded = Definition.MagazinesToLoad;
@@ -92,7 +74,7 @@ namespace Orrery.HeartModule.Server.Weapons
                         MagazinesLoaded++;
                         RemainingReloads--;
                         NextReloadTime = Definition.ReloadTime;
-                        ShotsInMag += shotsPerMag;
+                        ShotsInMag += ShotsPerMag;
 
                         if (!string.IsNullOrEmpty(DefinitionAudio.ReloadSound))
                         {
@@ -116,7 +98,7 @@ namespace Orrery.HeartModule.Server.Weapons
                 MagazinesLoaded++;
                 RemainingReloads--;
                 NextReloadTime = Definition.ReloadTime;
-                ShotsInMag += shotsPerMag;
+                ShotsInMag += ShotsPerMag;
             }
         }
 
@@ -128,7 +110,7 @@ namespace Orrery.HeartModule.Server.Weapons
         public void UseShot()
         {
             ShotsInMag--;
-            if (ShotsInMag % shotsPerMag == 0)
+            if (ShotsInMag % ShotsPerMag == 0)
             {
                 MagazinesLoaded--;
             }

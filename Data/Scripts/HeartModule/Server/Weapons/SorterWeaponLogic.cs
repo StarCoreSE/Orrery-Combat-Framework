@@ -155,7 +155,7 @@ namespace Orrery.HeartModule.Server.Weapons
         internal virtual void FireOnce()
         {
             ProjectileDefinitionBase ammoDef =
-                DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[0]];
+                DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[Magazine.SelectedAmmoIndex]];
 
             for (int i = 0; i < Definition.Loading.BarrelsPerShot; i++)
             {
@@ -205,8 +205,6 @@ namespace Orrery.HeartModule.Server.Weapons
                 SorterWep.Storage = new MyModStorageComponent();
 
             SorterWep.Storage.SetValue(HeartData.I.HeartSettingsGUID, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Settings)));
-
-            //MyAPIGateway.Utilities.ShowNotification(SettingsBlockRange.ToString(), 1000, "Red");
         }
 
         internal virtual void LoadDefaultSettings()
@@ -214,9 +212,12 @@ namespace Orrery.HeartModule.Server.Weapons
             if (!MyAPIGateway.Session.IsServer)
                 return;
 
+            Settings.LockedNetworking = true;
             Settings.ShootState = false;
-            Settings.AmmoLoadedIdx = Magazine.SelectedAmmoIndex;
+            Settings.MouseShootState = false;
+            Settings.AmmoLoadedIdx = 0;
             Settings.HudBarrelIndicatorState = false;
+            Settings.LockedNetworking = false;
         }
 
         internal virtual bool LoadSettings()
@@ -241,12 +242,8 @@ namespace Orrery.HeartModule.Server.Weapons
 
                 if (loadedSettings != null)
                 {
-                    Settings.ShootState = loadedSettings.ShootState;
-
-                    Settings.AmmoLoadedIdx = loadedSettings.AmmoLoadedIdx;
-                    Magazine.SelectedAmmoIndex = loadedSettings.AmmoLoadedIdx;
-
-                    Settings.HudBarrelIndicatorState = loadedSettings.HudBarrelIndicatorState;
+                    Settings = loadedSettings;
+                    Settings.WeaponId = Id;
 
                     return true;
                 }

@@ -40,6 +40,9 @@ namespace Orrery.HeartModule.Server.Weapons
 
         private void AddWeapon(IMyConveyorSorter sorter, WeaponDefinitionBase definition)
         {
+            if (_weapons.ContainsKey(sorter.EntityId))
+                return;
+
             SorterWeaponLogic logic;
 
             if (definition.Assignments.HasAzimuth && definition.Assignments.HasElevation)

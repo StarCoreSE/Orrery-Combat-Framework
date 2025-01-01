@@ -120,7 +120,7 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
                     }
                     return -1; // Return a default value (e.g., -1) when the index is out of bounds
                 };
-                AmmoComboBox.Setter = (b, key) => b.GameLogic.GetAs<SorterWeaponLogic>().Settings.AmmoLoadedIdx = (int)key;
+                AmmoComboBox.Setter = (b, key) => b.GameLogic.GetAs<SorterWeaponLogic>().Settings.AmmoLoadedIdx = (byte)key;
                 //AmmoComboBox.ComboBoxContent = HeartData.I.AmmoComboBoxSetter; // Set combo box based on what's open
 
                 MyAPIGateway.TerminalControls.AddControl<IMyConveyorSorter>(AmmoComboBox);

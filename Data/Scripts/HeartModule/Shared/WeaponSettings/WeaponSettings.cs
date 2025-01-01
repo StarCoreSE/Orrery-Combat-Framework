@@ -9,6 +9,7 @@ using VRageMath;
 namespace Orrery.HeartModule.Shared.WeaponSettings
 {
     [ProtoContract]
+    [ProtoInclude(91, typeof(TurretSettings))]
     internal class WeaponSettings : PacketBase
     {
         public WeaponSettings(long weaponId)
@@ -21,15 +22,19 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         /// </summary>
         internal WeaponSettings() { }
 
+        /// <summary>
+        /// Disables networking for this Settings instance if true.
+        /// </summary>
+        public bool LockedNetworking = false;
 
         [ProtoMember(1)]
         public long WeaponId;
 
 
         [ProtoMember(2)]
-        private short ShootStateContainer;
+        private byte _shootStateContainer;
 
-        public int AmmoLoadedIdx
+        public byte AmmoLoadedIdx
         {
             get
             {
@@ -38,12 +43,13 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             set
             {
                 _ammoLoadedIdx = value;
+                Server.Weapons.WeaponManager.GetWeapon(WeaponId)?.Magazine.EmptyMagazines();
                 Sync();
             }
         }
 
         [ProtoMember(3)]
-        private int _ammoLoadedIdx;
+        private byte _ammoLoadedIdx;
 
         #region ShootStates
 
@@ -51,11 +57,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(ShootStateContainer, ShootStates.Shoot);
+                return ExpandValue(_shootStateContainer, ShootStates.Shoot);
             }
             set
             {
-                CompressValue(ref ShootStateContainer, ShootStates.Shoot, value);
+                CompressValue(ref _shootStateContainer, ShootStates.Shoot, value);
                 Sync();
             }
         }
@@ -64,11 +70,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(ShootStateContainer, ShootStates.MouseShoot);
+                return ExpandValue(_shootStateContainer, ShootStates.MouseShoot);
             }
             set
             {
-                CompressValue(ref ShootStateContainer, ShootStates.MouseShoot, value);
+                CompressValue(ref _shootStateContainer, ShootStates.MouseShoot, value);
                 Sync();
             }
         }
@@ -77,11 +83,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(ShootStateContainer, ShootStates.HudBarrelIndicator);
+                return ExpandValue(_shootStateContainer, ShootStates.HudBarrelIndicator);
             }
             set
             {
-                CompressValue(ref ShootStateContainer, ShootStates.HudBarrelIndicator, value);
+                CompressValue(ref _shootStateContainer, ShootStates.HudBarrelIndicator, value);
                 Sync();
             }
         }
@@ -108,17 +114,30 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
                 bitwise &= ~enumValue; // AND with negated enumValue
         }
 
-        internal bool ExpandValue(short bitwise, int enumValue)
+        internal bool ExpandValue(ushort bitwise, ushort enumValue)
         {
             return (bitwise & enumValue) == enumValue;
         }
 
-        internal void CompressValue(ref short bitwise, int enumValue, bool state)
+        internal void CompressValue(ref ushort bitwise, ushort enumValue, bool state)
         {
             if (state)
-                bitwise |= (short)enumValue;
+                bitwise |= enumValue;
             else
-                bitwise &= (short)~enumValue; // AND with negated enumValue
+                bitwise &= (ushort)~enumValue; // AND with negated enumValue
+        }
+
+        internal bool ExpandValue(byte bitwise, byte enumValue)
+        {
+            return (bitwise & enumValue) == enumValue;
+        }
+
+        internal void CompressValue(ref byte bitwise, byte enumValue, bool state)
+        {
+            if (state)
+                bitwise |= enumValue;
+            else
+                bitwise &= (byte)~enumValue; // AND with negated enumValue
         }
 
         /// <summary>
@@ -126,30 +145,37 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         /// </summary>
         internal void Sync()
         {
+            if (LockedNetworking)
+                return;
+
             // Special handling for localhost
             if (MyAPIGateway.Session.IsServer && !MyAPIGateway.Utilities.IsDedicated)
             {
-                HeartLog.Info("[LocalServer] Syncing settings for " + WeaponId);
                 ServerNetwork.SendToEveryoneInSync(this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
 
                 var weaponClient = Client.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponClient != null)
+                {
                     weaponClient.Settings = this;
+                }
                 var weaponServer = Server.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponServer != null)
+                {
+                    bool needsReload = weaponServer.Settings.AmmoLoadedIdx != AmmoLoadedIdx;
                     weaponServer.Settings = this;
+                    if (needsReload)
+                        weaponServer.Magazine.EmptyMagazines();
+                }
 
                 return;
             }
 
             if (MyAPIGateway.Session.IsServer)
             {
-                HeartLog.Info("[Server] Syncing settings for " + WeaponId);
                 ServerNetwork.SendToEveryoneInSync(this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
             }
             else
             {
-                HeartLog.Info("[Client] Syncing settings for " + WeaponId);
                 ClientNetwork.SendToServer(this);
             }
         }
@@ -174,7 +200,12 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
                 var weapon = Server.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weapon != null)
                 {
+                    bool needsReload = weapon.Settings.AmmoLoadedIdx != AmmoLoadedIdx;
+
                     weapon.Settings = this;
+                    if (needsReload)
+                        weapon.Magazine.EmptyMagazines();
+
                     weapon.Settings.Sync();
                 }
             }
@@ -182,7 +213,9 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             {
                 var weapon = Client.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weapon != null)
+                {
                     weapon.Settings = this;
+                }
             }
         }
 
@@ -190,9 +223,9 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
 
         private static class ShootStates
         {
-            public const int Shoot = 1;
-            public const int MouseShoot = 2;
-            public const int HudBarrelIndicator = 4;
+            public const byte Shoot = 1;
+            public const byte MouseShoot = 2;
+            public const byte HudBarrelIndicator = 4;
         }
     }
 }
