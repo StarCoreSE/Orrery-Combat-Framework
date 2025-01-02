@@ -1,4 +1,5 @@
 ﻿using System;
+using Orrery.HeartModule.Server.GridTargeting;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Server.Weapons;
@@ -15,6 +16,7 @@ namespace Orrery.HeartModule.Server
         private ServerNetwork _network = new ServerNetwork();
         private ProjectileManager _projectileManager;
         private WeaponManager _weaponManager;
+        private GridTargetingManager _gridTargetingManager;
 
         public override void LoadData()
         {
@@ -25,6 +27,7 @@ namespace Orrery.HeartModule.Server
             _network.LoadData();
             _weaponManager = new WeaponManager();
             _projectileManager = new ProjectileManager();
+            _gridTargetingManager = new GridTargetingManager();
 
             HeartLog.Info("ServerBase initialized.");
         }
@@ -37,6 +40,7 @@ namespace Orrery.HeartModule.Server
             _network.UnloadData();
             _projectileManager.Close();
             _weaponManager.Close();
+            _gridTargetingManager.Close();
             I = null;
 
             HeartLog.Info("ServerBase closed.");
@@ -52,6 +56,7 @@ namespace Orrery.HeartModule.Server
             {
                 _network.Update();
                 _projectileManager.Update();
+                _gridTargetingManager.Update();
 
                 MyAPIGateway.Utilities.ShowNotification($"Server: {ProjectileManager.ActiveProjectiles}", 1000/60);
             }

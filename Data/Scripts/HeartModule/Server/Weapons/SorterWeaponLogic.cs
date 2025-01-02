@@ -4,6 +4,7 @@ using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using System;
 using System.Collections.Generic;
+using Orrery.HeartModule.Server.GridTargeting;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Utility;
 using Orrery.HeartModule.Shared.WeaponSettings;
@@ -41,6 +42,8 @@ namespace Orrery.HeartModule.Server.Weapons
             SorterWep.OnClosing += OnClosing;
 
             Settings = new WeaponSettings(sorterWep.EntityId);
+
+            GridTargetingManager.GetGridTargeting(sorterWep.CubeGrid).AddWeapon(this);
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -96,6 +99,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public void OnClosing(IMyEntity entity)
         {
+            GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid).RemoveWeapon(this);
             WeaponManager.RemoveWeapon(Id);
             MarkedForClose = true;
         }

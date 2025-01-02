@@ -55,7 +55,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
                     return false;
 
                 double rangeSq = Vector3D.DistanceSquared(Turret.MuzzleMatrix.Translation, TargetPosition.Value);
-                return rangeSq < Turret.Definition.Targeting.MaxTargetingRange * Turret.Definition.Targeting.MaxTargetingRange &&
+                return rangeSq < Turret.Settings.AiRange * Turret.Settings.AiRange &&
                        rangeSq > Turret.Definition.Targeting.MinTargetingRange * Turret.Definition.Targeting.MinTargetingRange;
             }
         }
