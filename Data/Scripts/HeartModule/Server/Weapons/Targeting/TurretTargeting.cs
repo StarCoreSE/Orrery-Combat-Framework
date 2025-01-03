@@ -191,7 +191,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         /// <summary>
         /// Checks if an entity's relationship to the grid is targetable by the turret.
         /// </summary>
-        /// <param name="e"></param>
+        /// <param name="entity"></param>
         /// <returns></returns>
         private bool IsRelationTargetable(IMyEntity entity)
         {
@@ -216,6 +216,11 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             }
         }
 
+        /// <summary>
+        /// Checks if an entity's type is targetable by the turret.
+        /// </summary>
+        /// <param name="entity"></param>
+        /// <returns></returns>
         private bool IsSelectionTargetable(IMyEntity entity)
         {
             var grid = entity as IMyCubeGrid;
