@@ -43,7 +43,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
             Settings = new WeaponSettings(sorterWep.EntityId);
 
-            GridTargetingManager.GetGridTargeting(sorterWep.CubeGrid).AddWeapon(this);
+            GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid).AddWeapon(this);
         }
 
         public override void UpdateOnceBeforeFrame()
@@ -99,7 +99,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public void OnClosing(IMyEntity entity)
         {
-            GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid).RemoveWeapon(this);
+            GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid)?.RemoveWeapon(this);
             WeaponManager.RemoveWeapon(Id);
             MarkedForClose = true;
         }

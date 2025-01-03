@@ -15,14 +15,23 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         public GridTargetingManager()
         {
+            _ = this;
+
+            MyAPIGateway.Entities.GetEntities(null, e =>
+            {
+                OnEntityAdd(e);
+                return false;
+            });
+
             MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
             MyAPIGateway.Entities.OnEntityRemove += OnEntityRemove;
-
-            _ = this;
         }
 
         public void Close()
         {
+            foreach (var targeting in _gridTargetings)
+                targeting.Close();
+
             MyAPIGateway.Entities.OnEntityAdd -= OnEntityAdd;
             MyAPIGateway.Entities.OnEntityRemove -= OnEntityRemove;
 

@@ -27,7 +27,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
         /// <summary>
         /// Weapons contained by this grid
         /// </summary>
-        internal HashSet<SorterWeaponLogic> GridWeapons = new HashSet<SorterWeaponLogic>();
+        private HashSet<SorterWeaponLogic> GridWeapons = new HashSet<SorterWeaponLogic>();
         /// <summary>
         /// Weapons contained by all subpart grids
         /// </summary>
@@ -36,7 +36,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
         /// <summary>
         /// Diagonal radius of grid + maximum targeting range of weapons on grid.
         /// </summary>
-        internal int MaxTargetingRange => GridSize + (int)AllWeapons.Max(wep => wep.Definition.Targeting.MaxTargetingRange);
+        internal int MaxTargetingRange => GridSize + (AllWeapons.Count > 0 ? (int)AllWeapons.Max(wep => wep.Definition.Targeting.MaxTargetingRange) : 0);
 
         internal int GridSize => (Grid.Max - Grid.Min).Length() / 2;
 
@@ -52,6 +52,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
         public GridTargeting MasterTargeting = null;
 
         internal IMyGridGroupData GridGroup;
+        private bool _needsGroupUpdate = false;
 
         /// <summary>
         /// Preferred targets of each type, mapped to <see cref="TargetingStateEnum">TargetingStateEnum</see>
@@ -75,25 +76,40 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         public GridTargeting(IMyCubeGrid grid)
         {
-            if (grid.Physics == null)
-                throw new Exception("Grid is invalid!");
+            Grid = grid;
 
-            _targetingSphere = new BoundingSphereD(grid.PositionComp.GetPosition(), MaxTargetingRange);
-            CheckIfLargest();
+            _targetingSphere = new BoundingSphereD();
 
             GridGroup = grid.GetGridGroup(GridLinkTypeEnum.Physical);
             GridGroup.OnGridAdded += OnGroupModified;
             GridGroup.OnGridRemoved += OnGroupModified;
 
-            grid.OnClosing += entity =>
-            {
-                GridGroup.OnGridAdded -= OnGroupModified;
-                GridGroup.OnGridRemoved -= OnGroupModified;
-            };
+            CheckIfLargest();
         }
 
         public void Update()
         {
+            if (Grid.Closed)
+            {
+                Close();
+                return;
+            }
+
+            if (_needsGroupUpdate)
+            {
+                if (GridGroup != Grid.GetGridGroup(GridLinkTypeEnum.Physical))
+                {
+                    GridGroup.OnGridAdded -= OnGroupModified;
+                    GridGroup.OnGridRemoved -= OnGroupModified;
+                    GridGroup = Grid.GetGridGroup(GridLinkTypeEnum.Physical);
+                    GridGroup.OnGridAdded += OnGroupModified;
+                    GridGroup.OnGridRemoved += OnGroupModified;
+                }
+
+                CheckIfLargest();
+                _needsGroupUpdate = false;
+            }
+
             // Only the largest grid does targeting.
             if (!IsLargestInGroup)
                 return;
@@ -118,10 +134,13 @@ namespace Orrery.HeartModule.Server.GridTargeting
                 // Don't waste CPU time on grids that can't target.
                 if (AllWeapons.Count == 0)
                     return;
+
+                List<IMyCubeGrid> attachedGrids = new List<IMyCubeGrid>();
+                GridGroup.GetGrids(attachedGrids);
             
                 // Get all valid targets able to be targeted by the grid
                 MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref _targetingSphere, _entityBuffer);
-                _entityBuffer = _entityBuffer.Where(ent => ent is IMyCharacter || ent is IMyCubeGrid).ToList();
+                _entityBuffer = _entityBuffer.Where(ent => (ent is IMyCharacter || ent is IMyCubeGrid) && !attachedGrids.Contains(ent as IMyCubeGrid)).ToList();
             }
 
             // Get valid target types
@@ -191,6 +210,12 @@ namespace Orrery.HeartModule.Server.GridTargeting
             }
         }
 
+        public void Close()
+        {
+            GridGroup.OnGridAdded -= OnGroupModified;
+            GridGroup.OnGridRemoved -= OnGroupModified;
+        }
+
         #endregion
 
         #region Interface
@@ -200,6 +225,8 @@ namespace Orrery.HeartModule.Server.GridTargeting
             GridWeapons.Add(weapon);
             if (!IsLargestInGroup)
                 MasterTargeting.AllWeapons.Add(weapon);
+            else
+                AllWeapons.Add(weapon);
         }
 
         public void RemoveWeapon(SorterWeaponLogic weapon)
@@ -207,6 +234,8 @@ namespace Orrery.HeartModule.Server.GridTargeting
             GridWeapons.Remove(weapon);
             if (!IsLargestInGroup)
                 MasterTargeting.AllWeapons.Remove(weapon);
+            else
+                AllWeapons.Remove(weapon);
         }
 
         #endregion
@@ -226,6 +255,9 @@ namespace Orrery.HeartModule.Server.GridTargeting
             // Check if largest grid in group
             foreach (var grid in attachedGrids)
             {
+                if (grid == Grid)
+                    continue;
+
                 int checkingGridSize = (grid.Max - grid.Min).Length() / 2;
                 if (checkingGridSize < GridSize)
                     continue;
@@ -241,6 +273,9 @@ namespace Orrery.HeartModule.Server.GridTargeting
             // Add slave targetings
             foreach (var grid in attachedGrids)
             {
+                if (grid == Grid)
+                    continue;
+
                 var slaveTargeting = GridTargetingManager.GetGridTargeting(grid);
                 SlaveTargeting.Add(slaveTargeting);
                 foreach (var weapon in slaveTargeting.GridWeapons)
@@ -254,16 +289,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         private void OnGroupModified(IMyGridGroupData arg1, IMyCubeGrid arg2, IMyGridGroupData previousOrNewData)
         {
-            if (GridGroup != Grid.GetGridGroup(GridLinkTypeEnum.Physical))
-            {
-                GridGroup.OnGridAdded -= OnGroupModified;
-                GridGroup.OnGridRemoved -= OnGroupModified;
-                GridGroup = Grid.GetGridGroup(GridLinkTypeEnum.Physical);
-                GridGroup.OnGridAdded += OnGroupModified;
-                GridGroup.OnGridRemoved += OnGroupModified;
-            }
-
-            CheckIfLargest();
+            _needsGroupUpdate = true;
         }
 
         #endregion

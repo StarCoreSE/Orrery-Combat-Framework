@@ -22,14 +22,22 @@ namespace Orrery.HeartModule.Server
         {
             if (!MyAPIGateway.Session.IsServer)
                 return;
-            
-            I = this;
-            _network.LoadData();
-            _weaponManager = new WeaponManager();
-            _projectileManager = new ProjectileManager();
-            _gridTargetingManager = new GridTargetingManager();
 
-            HeartLog.Info("ServerBase initialized.");
+            try
+            {
+                I = this;
+                _network.LoadData();
+                _gridTargetingManager = new GridTargetingManager();
+                _weaponManager = new WeaponManager();
+                _projectileManager = new ProjectileManager();
+
+                HeartLog.Info("ServerBase initialized.");
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ServerBase));
+                throw;
+            }
         }
 
         protected override void UnloadData()
@@ -37,13 +45,21 @@ namespace Orrery.HeartModule.Server
             if (!MyAPIGateway.Session.IsServer)
                 return;
 
-            _network.UnloadData();
-            _projectileManager.Close();
-            _weaponManager.Close();
-            _gridTargetingManager.Close();
-            I = null;
+            try
+            {
+                _network.UnloadData();
+                _projectileManager.Close();
+                _weaponManager.Close();
+                _gridTargetingManager.Close();
+                I = null;
 
-            HeartLog.Info("ServerBase closed.");
+                HeartLog.Info("ServerBase closed.");
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ServerBase));
+                throw;
+            }
         }
 
         private int _ticks;

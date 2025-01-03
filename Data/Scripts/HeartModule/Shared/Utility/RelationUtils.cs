@@ -1,7 +1,10 @@
-﻿using Sandbox.ModAPI;
+﻿using System.Linq;
+using Orrery.HeartModule.Shared.Targeting;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
 
 namespace Orrery.HeartModule.Shared.Utility
 {
@@ -65,6 +68,29 @@ namespace Orrery.HeartModule.Shared.Utility
             long owner = ownGrid.BigOwners[0];
 
             return GetRelationsBetweenPlayers(owner, targetIdentity.Value).MapToBlockRelations();
+        }
+
+        public static MyRelationsBetweenPlayerAndBlock GetRelationsBetweenBlockAndEntity(IMyCubeBlock thisBlock, IMyEntity entity)
+        {
+            // Entity type
+            var grid = entity as IMyCubeGrid;
+            var character = entity as IMyCharacter;
+            if (grid != null)
+            {
+                if (grid.BigOwners.Count == 0)
+                    return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+                return thisBlock.GetUserRelationToOwner(grid.BigOwners[0]);
+            }
+            else if (character != null)
+            {
+                var player = HeartData.I.Players.FirstOrDefault(p => p.Character == character);
+                if (player == null) // I'm too lazy to let offline characters be fired on.
+                    return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+
+                return thisBlock.GetUserRelationToOwner(player.IdentityId);
+            }
+
+            return MyRelationsBetweenPlayerAndBlock.NoOwnership;
         }
     }
 }

@@ -62,7 +62,6 @@ namespace Orrery.HeartModule.Server.Weapons
             if (!SorterWep.IsWorking) // Don't turn if the turret is disabled
                 return;
 
-            Targeting.SetTarget((MyEntity) MyAPIGateway.Session.Player.Character); // TODO remove
             Targeting.UpdateTargeting();
             UpdateTurretSubparts();
             base.UpdateAfterSimulation();
