@@ -41,6 +41,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         private void Update10()
         {
+            // TODO: Spread this over multiple ticks
             foreach (var targeting in _gridTargetings)
                 targeting.Update10();
         }
@@ -58,7 +59,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
             IMyCubeGrid grid = entity as IMyCubeGrid;
             if (grid == null)
                 return;
-            _gridTargetings.Remove(_gridTargetings.First(targeting => targeting.Grid == grid));
+            _gridTargetings.Remove(_gridTargetings.FirstOrDefault(targeting => targeting.Grid == grid));
         }
     }
 }

@@ -31,7 +31,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         private ushort _aiRange;
 
         [ProtoMember(5)]
-        private ushort _targetStateContainer;
+        public ushort TargetStateContainer;
 
         #region TargetingStates
 
@@ -39,11 +39,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetGrids);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetGrids);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetGrids, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetGrids, value);
                 Sync();
             }
         }
@@ -52,11 +52,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetSmallGrids);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetSmallGrids);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetSmallGrids, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetSmallGrids, value);
                 Sync();
             }
         }
@@ -65,11 +65,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetLargeGrids);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetLargeGrids);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetLargeGrids, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetLargeGrids, value);
                 Sync();
             }
         }
@@ -78,11 +78,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetCharacters);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetCharacters);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetCharacters, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetCharacters, value);
                 Sync();
             }
         }
@@ -91,11 +91,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetProjectiles);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetProjectiles);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetProjectiles, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetProjectiles, value);
                 Sync();
             }
         }
@@ -104,11 +104,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetEnemies);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetEnemies);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetEnemies, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetEnemies, value);
                 Sync();
             }
         }
@@ -117,11 +117,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetFriendlies);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetFriendlies);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetFriendlies, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetFriendlies, value);
                 Sync();
             }
         }
@@ -130,11 +130,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetNeutrals);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetNeutrals);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetNeutrals, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetNeutrals, value);
                 Sync();
             }
         }
@@ -143,11 +143,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.TargetUnowned);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.TargetUnowned);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.TargetUnowned, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.TargetUnowned, value);
                 Sync();
             }
         }
@@ -156,11 +156,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             get
             {
-                return ExpandValue(_targetStateContainer, TargetingSettingStates.PreferUniqueTarget);
+                return ExpandValue(TargetStateContainer, TargetingSettingStates.PreferUniqueTarget);
             }
             set
             {
-                CompressValue(ref _targetStateContainer, TargetingSettingStates.PreferUniqueTarget, value);
+                CompressValue(ref TargetStateContainer, TargetingSettingStates.PreferUniqueTarget, value);
                 Sync();
             }
         }
@@ -169,10 +169,13 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
 
         public override string ToString()
         {
-            return base.ToString() + $"\nAiRange: {AiRange}\nTargetState: {_targetStateContainer}";
+            return base.ToString() + $"\nAiRange: {AiRange}\nTargetState: {TargetStateContainer}";
         }
 
-        private static class TargetingSettingStates
+        /// <summary>
+        /// See <see cref="Orrery.HeartModule.Shared.Targeting.TargetingStateEnum">TargetingStateEnum</see>
+        /// </summary>
+        public static class TargetingSettingStates
         {
             public const ushort TargetGrids = 1;
             public const ushort TargetLargeGrids = 2;

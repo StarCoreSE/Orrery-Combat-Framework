@@ -1,5 +1,7 @@
 ﻿using Orrery.HeartModule.Shared.Utility;
 using System;
+using Orrery.HeartModule.Server.GridTargeting;
+using Sandbox.ModAPI;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRageMath;
@@ -11,6 +13,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         public Vector3D? TargetPosition { get; private set; }
         public SorterWeaponLogic Weapon { get; private set; }
         public SorterTurretLogic Turret { get; private set; }
+        public readonly GridTargeting.GridTargeting GridTargeting;
 
         public MyEntity Target { get; private set; }
 
@@ -19,10 +22,14 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             Weapon = weapon;
             Turret = weapon;
             TargetPosition = null;
+            GridTargeting = GridTargetingManager.GetGridTargeting(Turret.SorterWep.CubeGrid);
         }
 
         public void UpdateTargeting()
         {
+            foreach (var target in GridTargeting.AvailableTargets)
+                MyAPIGateway.Utilities.ShowNotification($"{target.Key}: {target.Value.Count}");
+
             if (Target == null)
                 TargetPosition = null;
             else

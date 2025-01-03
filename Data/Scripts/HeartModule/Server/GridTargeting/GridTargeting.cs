@@ -2,9 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using Orrery.HeartModule.Server.Weapons;
+using Orrery.HeartModule.Shared.Targeting;
+using Orrery.HeartModule.Shared.Utility;
 using Sandbox.Game.Entities;
+using Sandbox.Game.Entities.Character;
+using Sandbox.ModAPI;
+using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
+using VRage.ModAPI;
 using VRageMath;
 
 namespace Orrery.HeartModule.Server.GridTargeting
@@ -47,6 +53,26 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         internal IMyGridGroupData GridGroup;
 
+        /// <summary>
+        /// Preferred targets of each type, mapped to <see cref="TargetingStateEnum">TargetingStateEnum</see>
+        /// </summary>
+        public Dictionary<TargetingStateEnum, List<IMyEntity>> AvailableTargets = new Dictionary<TargetingStateEnum, List<IMyEntity>>
+        {
+            [TargetingStateEnum.Grids] = new List<IMyEntity>(),
+            [TargetingStateEnum.LargeGrids] = new List<IMyEntity>(),
+            [TargetingStateEnum.SmallGrids] = new List<IMyEntity>(),
+            [TargetingStateEnum.Projectiles] = new List<IMyEntity>(),
+            [TargetingStateEnum.Characters] = new List<IMyEntity>(),
+            [TargetingStateEnum.Friendlies] = new List<IMyEntity>(),
+            [TargetingStateEnum.Neutrals] = new List<IMyEntity>(),
+            [TargetingStateEnum.Enemies] = new List<IMyEntity>(),
+            [TargetingStateEnum.Unowned] = new List<IMyEntity>(),
+        };
+
+        public TargetingStateEnum AllowedTargetTypes { get; private set; }
+
+        #region Internal
+
         public GridTargeting(IMyCubeGrid grid)
         {
             if (grid.Physics == null)
@@ -77,20 +103,97 @@ namespace Orrery.HeartModule.Server.GridTargeting
         {
             // Only the largest grid does targeting.
             if (!IsLargestInGroup)
+            {
+                AvailableTargets = MasterTargeting.AvailableTargets;
+                AllowedTargetTypes = MasterTargeting.AllowedTargetTypes;
                 return;
+            }
 
-            _entityBuffer.Clear();
-            _targetingSphere.Center = Grid.PositionComp.GetPosition();
-            _targetingSphere.Radius = MaxTargetingRange;
+            // Pull targets
+            {
+                _entityBuffer.Clear();
+                _targetingSphere.Center = Grid.PositionComp.GetPosition();
+                _targetingSphere.Radius = MaxTargetingRange;
 
-            // Don't waste CPU time on grids that can't target.
-            if (AllWeapons.Count == 0)
-                return;
+                // Don't waste CPU time on grids that can't target.
+                if (AllWeapons.Count == 0)
+                    return;
             
-            // Get all valid targets able to be targeted by the grid
-            MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref _targetingSphere, _entityBuffer);
-            _entityBuffer = _entityBuffer.Where(ent => ent is IMyCharacter || ent is IMyCubeGrid).ToList();
+                // Get all valid targets able to be targeted by the grid
+                MyGamePruningStructure.GetAllTopMostEntitiesInSphere(ref _targetingSphere, _entityBuffer);
+                _entityBuffer = _entityBuffer.Where(ent => ent is IMyCharacter || ent is IMyCubeGrid).ToList();
+            }
+
+            // Get valid target types
+            {
+                // Always allow grid targeting
+                AllowedTargetTypes = TargetingStateEnum.Grids | TargetingStateEnum.LargeGrids | TargetingStateEnum.SmallGrids;
+                foreach (var turret in AllWeapons.OfType<SorterTurretLogic>())
+                    AllowedTargetTypes |= (TargetingStateEnum) turret.Settings.TargetStateContainer;
+
+                foreach (var list in AvailableTargets.Values)
+                    list.Clear();
+
+                foreach (var entity in _entityBuffer)
+                {
+                    MyRelationsBetweenPlayerAndBlock relations = MyRelationsBetweenPlayerAndBlock.NoOwnership;
+
+                    // Entity type
+                    var grid = entity as IMyCubeGrid;
+                    var character = entity as IMyCharacter;
+                    if (grid != null)
+                    {
+                        AvailableTargets[TargetingStateEnum.Grids].Add(grid);
+                        if (grid.GridSizeEnum == MyCubeSize.Large)
+                            AvailableTargets[TargetingStateEnum.LargeGrids].Add(grid);
+                        else
+                            AvailableTargets[TargetingStateEnum.SmallGrids].Add(grid);
+
+                        relations = RelationUtils.GetRelationsBetweeenGrids(Grid, grid);
+                    }
+                    else if (character != null)
+                    {
+                        var player = HeartData.I.Players.FirstOrDefault(p => p.Character == character);
+                        if (player == null) // I'm too lazy to let offline characters be fired on.
+                            continue;
+
+                        AvailableTargets[TargetingStateEnum.Characters].Add(character);
+                        relations = RelationUtils.GetRelationsBetweenGridAndPlayer(Grid, player.IdentityId);
+                    }
+
+                    // Relation type
+                    // Relations should always be set because only grids and characters can be in the entity buffer.
+                    switch (relations)
+                    {
+                        case MyRelationsBetweenPlayerAndBlock.NoOwnership:
+                            AvailableTargets[TargetingStateEnum.Unowned].Add(entity);
+                            break;
+                        case MyRelationsBetweenPlayerAndBlock.Owner:
+                        case MyRelationsBetweenPlayerAndBlock.Friends:
+                        case MyRelationsBetweenPlayerAndBlock.FactionShare:
+                            AvailableTargets[TargetingStateEnum.Friendlies].Add(entity);
+                            break;
+                        case MyRelationsBetweenPlayerAndBlock.Neutral:
+                            AvailableTargets[TargetingStateEnum.Neutrals].Add(entity);
+                            break;
+                        case MyRelationsBetweenPlayerAndBlock.Enemies:
+                            AvailableTargets[TargetingStateEnum.Enemies].Add(entity);
+                            break;
+                        default:
+                            throw new Exception("Invalid relationship state!");
+                    }
+                }
+
+                // Sort targets by distance to grid
+                var gridPosition = Grid.PositionComp.GetPosition();
+                foreach (var list in AvailableTargets.ToArray())
+                    AvailableTargets[list.Key] = list.Value.OrderBy(ent => Vector3D.DistanceSquared(gridPosition, ent.GetPosition())).ToList();
+            }
         }
+
+        #endregion
+
+        #region Interface
 
         public void AddWeapon(SorterWeaponLogic weapon)
         {
@@ -105,6 +208,10 @@ namespace Orrery.HeartModule.Server.GridTargeting
             if (!IsLargestInGroup)
                 MasterTargeting.AllWeapons.Remove(weapon);
         }
+
+        #endregion
+
+        #region Private
 
         private void CheckIfLargest()
         {
@@ -139,6 +246,10 @@ namespace Orrery.HeartModule.Server.GridTargeting
                 foreach (var weapon in slaveTargeting.GridWeapons)
                     AllWeapons.Add(weapon);
             }
+
+            // Add own weapons
+            foreach (var weapon in GridWeapons)
+                AllWeapons.Add(weapon);
         }
 
         private void OnGroupModified(IMyGridGroupData arg1, IMyCubeGrid arg2, IMyGridGroupData previousOrNewData)
@@ -154,5 +265,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
             CheckIfLargest();
         }
+
+        #endregion
     }
 }
