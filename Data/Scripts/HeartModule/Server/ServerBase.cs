@@ -9,7 +9,7 @@ using VRage.Game.Components;
 
 namespace Orrery.HeartModule.Server
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation | MyUpdateOrder.AfterSimulation)]
     internal class ServerBase : MySessionComponentBase
     {
         public static ServerBase I;
@@ -62,6 +62,18 @@ namespace Orrery.HeartModule.Server
             }
         }
 
+        public override void UpdateBeforeSimulation()
+        {
+            try
+            {
+                _projectileManager.UpdateBeforeSimulation();
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ServerBase));
+            }
+        }
+
         private int _ticks;
         public override void UpdateAfterSimulation()
         {
@@ -71,7 +83,7 @@ namespace Orrery.HeartModule.Server
             try
             {
                 _network.Update();
-                _projectileManager.Update();
+                _projectileManager.UpdateAfterSimulation();
                 _gridTargetingManager.Update();
 
                 MyAPIGateway.Utilities.ShowNotification($"Server: {ProjectileManager.ActiveProjectiles}", 1000/60);

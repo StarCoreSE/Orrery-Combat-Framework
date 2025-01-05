@@ -41,7 +41,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
                 UpdateTargetPosition();
             }
 
-            MyAPIGateway.Utilities.ShowNotification($"Target: {Target?.GetType().Name ?? "None"} {(Target as TargetableProjectile)?.Projectile.Id.ToString() ?? ""} {Target?.GetRelations(Turret.SorterWep)} {TargetPosition != null}", 1000/60);
+            //MyAPIGateway.Utilities.ShowNotification($"Target: {Target?.GetType().Name ?? "None"} {(Target as TargetableProjectile)?.Projectile.Id.ToString() ?? ""} {Target?.GetRelations(Turret.SorterWep)} {TargetPosition != null}", 1000/60);
 
             Turret.DesiredAngle = GetAngleToTarget(TargetPosition);
         }

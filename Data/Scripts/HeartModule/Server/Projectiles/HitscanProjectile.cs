@@ -25,7 +25,7 @@ namespace Orrery.HeartModule.Server.Projectiles
         private List<MyLineSegmentOverlapResult<MyEntity>> _raycastCache =
             new List<MyLineSegmentOverlapResult<MyEntity>>();
         private List<MyEntity> _areaHitCache = new List<MyEntity>();
-
+        private HashSet<PhysicalProjectile> _projectileBuffer;
 
         public bool IsActive = true;
         public int HitCount = 0;
@@ -39,6 +39,9 @@ namespace Orrery.HeartModule.Server.Projectiles
             Definition = definition;
             Raycast = new LineD(start, start + direction * Definition.PhysicalProjectileDef.MaxTrajectory);
             Owner = owner;
+
+            // Start with some pre-allocation to save performance
+            _projectileBuffer = new HashSet<PhysicalProjectile>(Definition.DamageDef.DamageToProjectiles > 0 ? 5 : 0);
         }
 
         public virtual void UpdateTick(double deltaTime)
@@ -56,6 +59,12 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
 
             #endregion
+        }
+
+        public virtual void UpdateAfterTick(double deltaTime)
+        {
+            if (!IsActive)
+                return;
 
             CheckImpact();
         }
@@ -146,19 +155,26 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             if (IsActive && Definition.DamageDef.DamageToProjectiles > 0)
             {
-                foreach (var projectile in ProjectileManager.GetProjectilesInLine(Raycast, projectile =>
-                         {
-                             bool ownersMatch = projectile.Owner == Owner || (projectile.Owner is IMyConveyorSorter && Owner is IMyConveyorSorter && ((IMyConveyorSorter)projectile.Owner)?.CubeGrid ==
-                                 ((IMyConveyorSorter)Owner).CubeGrid);
-                             return !(projectile == this || ownersMatch || projectile.Definition.PhysicalProjectileDef.Health <= 0);
-                         }))
+                ProjectileManager.GetProjectilesInLine(Raycast, ref _projectileBuffer);
+
+                Vector3D? firstImpact = null;
+                foreach (var projectile in _projectileBuffer)
                 {
+                    bool ownersMatch = projectile.Owner == Owner || (projectile.Owner is IMyConveyorSorter &&
+                                                                     Owner is IMyConveyorSorter &&
+                                                                     ((IMyConveyorSorter)projectile.Owner)?.CubeGrid ==
+                                                                     ((IMyConveyorSorter)Owner).CubeGrid);
+                    if (projectile == this || ownersMatch)
+                        continue;
+
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
                     HitCount++;
-                    CheckAreaDamage(projectile.Raycast.From, null);
+                    firstImpact = projectile.Raycast.From;
                     if (Definition.DamageDef.MaxImpacts <= 0 || HitCount >= Definition.DamageDef.MaxImpacts)
                         IsActive = false;
                 }
+                if (firstImpact != null)
+                    CheckAreaDamage(firstImpact.Value, null);
             }
 
             #endregion
@@ -232,9 +248,9 @@ namespace Orrery.HeartModule.Server.Projectiles
             #region Projectile AoE Damage
             if (Definition.DamageDef.DamageToProjectiles > 0 && Definition.DamageDef.DamageToProjectilesRadius > 0)
             {
-                var collidedProjectiles = ProjectileManager.GetProjectilesInSphere(new BoundingSphereD(Raycast.From, Definition.DamageDef.DamageToProjectilesRadius));
+                ProjectileManager.GetProjectilesInSphere(new BoundingSphereD(Raycast.From, Definition.DamageDef.DamageToProjectilesRadius), ref _projectileBuffer);
 
-                foreach (var projectile in collidedProjectiles)
+                foreach (var projectile in _projectileBuffer)
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
             }
             #endregion
@@ -294,8 +310,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             };
         }
 
-        public static explicit operator SerializedSpawnProjectile(HitscanProjectile p) => p.ToSerializedSpawnProjectile();
-        public static explicit operator SerializedSyncProjectile(HitscanProjectile p) => p.ToSerializedSyncProjectile();
-        public static explicit operator SerializedCloseProjectile(HitscanProjectile p) => p.ToSerializedCloseProjectile();
+        public static explicit operator SerializedSpawnProjectile(HitscanProjectile p) => p?.ToSerializedSpawnProjectile();
+        public static explicit operator SerializedSyncProjectile(HitscanProjectile p) => p?.ToSerializedSyncProjectile();
+        public static explicit operator SerializedCloseProjectile(HitscanProjectile p) => p?.ToSerializedCloseProjectile();
     }
 }

@@ -17,7 +17,8 @@ namespace Orrery.HeartModule.Server.Projectiles
         private static ProjectileManager _;
 
         private readonly HashSet<HitscanProjectile> _projectiles = new HashSet<HitscanProjectile>();
-        private readonly List<HitscanProjectile> _deadProjectiles = new List<HitscanProjectile>();
+        private readonly HashSet<HitscanProjectile> _projectilesWithHealth = new HashSet<HitscanProjectile>();
+        private readonly HashSet<HitscanProjectile> _deadProjectiles = new HashSet<HitscanProjectile>();
         private uint _maxProjectileId = 0;
 
         public ProjectileManager()
@@ -30,13 +31,21 @@ namespace Orrery.HeartModule.Server.Projectiles
             _ = null;
         }
 
-        public void Update()
+        public void UpdateBeforeSimulation()
         {
             MyAPIGateway.Parallel.ForEach(_projectiles, projectile =>
             {
                 projectile.UpdateTick(1/60d);
                 if (projectile.Definition.NetworkingDef.DoConstantSync) // TODO: Smart (rate-limited) network syncing
                     ServerNetwork.SendToEveryoneInSync((SerializedSyncProjectile) projectile, projectile.Raycast.From);
+            });
+        }
+
+        public void UpdateAfterSimulation()
+        {
+            MyAPIGateway.Parallel.ForEach(_projectiles, projectile =>
+            {
+                projectile.UpdateAfterTick(1/60d);
 
                 if (!projectile.IsActive || projectile.Definition.PhysicalProjectileDef.IsHitscan)
                     _deadProjectiles.Add(projectile);
@@ -46,6 +55,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             {
                 ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Raycast.From);
                 _projectiles.Remove(deadProjectile);
+                _projectilesWithHealth.Remove(deadProjectile);
             }
 
             _deadProjectiles.Clear();
@@ -55,6 +65,9 @@ namespace Orrery.HeartModule.Server.Projectiles
         {
             projectile.Id = _._maxProjectileId++;
             _._projectiles.Add(projectile);
+
+            if (projectile.Definition.PhysicalProjectileDef.Health > 0)
+                _._projectilesWithHealth.Add(projectile);
 
             ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Raycast.From);
         }
@@ -79,30 +92,40 @@ namespace Orrery.HeartModule.Server.Projectiles
             _._deadProjectiles.Add(projectile);
         }
 
-        public static IEnumerable<PhysicalProjectile> GetProjectilesInSphere(BoundingSphereD sphere, Func<PhysicalProjectile, bool> check = null)
+        public static void GetProjectilesInSphere(BoundingSphereD sphere, ref HashSet<PhysicalProjectile> projectiles)
         {
-            return _._projectiles.Where(p =>
+            projectiles.Clear();
+            if (_._projectilesWithHealth.Count == 0)
+                return;
+
+            foreach (var p in _._projectilesWithHealth)
             {
                 var projectile = p as PhysicalProjectile;
 
-                return projectile != null && (check?.Invoke(projectile) ?? true) &&
-                       Vector3D.DistanceSquared(projectile.Raycast.From, sphere.Center) <=
-                       (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius) *
-                       (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius);
-            }).Select(p => p as PhysicalProjectile);
+                if (projectile != null &&
+                    Vector3D.DistanceSquared(projectile.Raycast.From, sphere.Center) <=
+                    (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius) *
+                    (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius))
+                    projectiles.Add(projectile);
+            }
         }
 
-        public static IEnumerable<PhysicalProjectile> GetProjectilesInLine(LineD line, Func<PhysicalProjectile, bool> check = null)
+        public static void GetProjectilesInLine(LineD line, ref HashSet<PhysicalProjectile> projectiles)
         {
-            BoundingSphereD sphere = new BoundingSphereD(line.From, line.Length);
-            return GetProjectilesInSphere(sphere, check).Where(projectile =>
+            projectiles.Clear();
+            if (_._projectilesWithHealth.Count == 0)
+                return;
+
+            foreach (var p in _._projectilesWithHealth)
             {
-                if (projectile == null || projectile.Health <= 0)
-                    return false;
-                sphere.Center = projectile.Raycast.From;
-                sphere.Radius = projectile.Definition.PhysicalProjectileDef.ProjectileSize;
-                return sphere.RayIntersect(line);
-            });
+                var projectile = p as PhysicalProjectile;
+
+                if (projectile != null &&
+                    Vector3D.DistanceSquared(projectile.Raycast.From, line.From) <= (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) * (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) &&
+                    projectile.CollisionSphere.RayIntersect(line)
+                    )
+                    projectiles.Add(projectile);
+            }
         }
     }
 }

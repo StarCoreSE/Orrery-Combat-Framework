@@ -11,6 +11,7 @@ namespace Orrery.HeartModule.Server.Projectiles
     {
         public Vector3D InheritedVelocity = Vector3D.Zero;
         public Vector3D Velocity;
+        public BoundingSphereD CollisionSphere;
 
         private float _health;
 
@@ -35,6 +36,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
             Velocity = direction * Definition.PhysicalProjectileDef.Velocity;
             Health = Definition.PhysicalProjectileDef.Health;
+            CollisionSphere = new BoundingSphereD(Raycast.From, Definition.PhysicalProjectileDef.ProjectileSize);
+
             if (owner?.Physics != null)
             {
                 Vector3D ownerCenter;
@@ -72,6 +75,8 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 Raycast.To = Raycast.From + (InheritedVelocity + Velocity) * deltaTime;
                 Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
+
+                CollisionSphere.Center = Raycast.From;
             }
 
             #endregion

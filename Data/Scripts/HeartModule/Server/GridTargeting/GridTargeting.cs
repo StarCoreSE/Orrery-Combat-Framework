@@ -74,6 +74,8 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         public TargetingStateEnum AllowedTargetTypes { get; private set; }
 
+        private HashSet<PhysicalProjectile> _projectileBuffer = new HashSet<PhysicalProjectile>();
+
         #region Internal
 
         public GridTargeting(IMyCubeGrid grid)
@@ -188,7 +190,8 @@ namespace Orrery.HeartModule.Server.GridTargeting
                 // Don't waste cpu time looking for projectiles if we can't target them.
                 if ((AllowedTargetTypes & TargetingStateEnum.Projectiles) == TargetingStateEnum.Projectiles)
                 {
-                    foreach (var projectile in ProjectileManager.GetProjectilesInSphere(_targetingSphere))
+                    ProjectileManager.GetProjectilesInSphere(_targetingSphere, ref _projectileBuffer);
+                    foreach (var projectile in _projectileBuffer)
                     {
                         var target = new TargetableProjectile(projectile);
                         var relations = target.GetRelations(Grid);
