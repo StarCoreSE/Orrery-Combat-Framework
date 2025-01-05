@@ -25,7 +25,7 @@ namespace Orrery.HeartModule.Shared.Targeting.Generics
         public static implicit operator MyEntity(TargetableEntity ent) => ent.Entity;
 
         public Vector3D Position => Entity.PositionComp.GetPosition();
-        public Vector3D Velocity => Entity.Physics.LinearVelocity;
+        public Vector3D Velocity => Entity.Physics?.LinearVelocity ?? Vector3.Zero;
 
         public MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeBlock block)
         {

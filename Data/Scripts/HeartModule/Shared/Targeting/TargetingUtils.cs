@@ -8,15 +8,6 @@ namespace Orrery.HeartModule.Shared.Targeting
 {
     internal static class TargetingUtils
     {
-        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, double projectileVelocity)
-        {
-            if (target is TargetableEntity)
-                return InterceptionPoint(startPos, startVel, (TargetableEntity)target, projectileVelocity);
-            if (target is TargetableProjectile)
-                return InterceptionPoint(startPos, startVel, (TargetableProjectile)target, projectileVelocity);
-            return null;
-        }
-
         public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, ProjectileDefinitionBase def)
         {
             if (def == null || target == null)
@@ -27,36 +18,12 @@ namespace Orrery.HeartModule.Shared.Targeting
             return InterceptionPoint(startPos, startVel, target, def.PhysicalProjectileDef.Velocity);
         }
 
-        /// <summary>
-        /// Calculate lead position for an entity.
-        /// </summary>
-        /// <param name="startPos"></param>
-        /// <param name="startVel"></param>
-        /// <param name="target"></param>
-        /// <param name="projectileVelocity"></param>
-        /// <returns></returns>
-        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, TargetableEntity target, float projectileVelocity)
+        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, float projectileVelocity)
         {
-            if (target?.Entity?.Physics == null)
-                return target?.Entity?.PositionComp.WorldAABB.Center + target?.Entity?.Physics?.LinearVelocity / 60f; // Because this doesn't run during simulation, offset velocity
+            if (target == null)
+                return null;
 
-            return InterceptionPoint(startPos, startVel, target.Entity.PositionComp.WorldAABB.Center, target.Entity.Physics.LinearVelocity, projectileVelocity);
-        }
-
-        /// <summary>
-        /// Calculate lead position for a projectile.
-        /// </summary>
-        /// <param name="startPos"></param>
-        /// <param name="startVel"></param>
-        /// <param name="target"></param>
-        /// <param name="projectileVelocity"></param>
-        /// <returns></returns>
-        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, TargetableProjectile target, float projectileVelocity)
-        {
-            if (target?.Projectile == null)
-                return target?.Position; // Because this doesn't run during simulation, offset velocity
-
-            return InterceptionPoint(startPos, startVel, target.Projectile.Position, target.Projectile.Velocity, projectileVelocity);
+            return InterceptionPoint(startPos, startVel, target.Position, target.Velocity, projectileVelocity);
         }
 
         public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, Vector3D targetPos, Vector3D targetVel, float projectileSpeed)

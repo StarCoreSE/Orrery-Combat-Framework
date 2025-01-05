@@ -35,7 +35,7 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         public ProjectileGuidance(IPhysicalProjectile projectile, ITargetable target) : this(projectile)
         {
-            _target = target;
+            SetTarget(target);
         }
 
         public void SetTarget(ITargetable target)
@@ -73,7 +73,7 @@ namespace Orrery.HeartModule.Shared.Targeting
             if (_currentStage.UseAimPrediction)
             {
                 Aimpoint = TargetingUtils.InterceptionPoint(Projectile.Position, Vector3D.Zero, _target,
-                    Projectile.Velocity.Length()) ?? _target.Position;
+                    (float) Projectile.Velocity.Length()) ?? _target.Position;
             }
             else
                 Aimpoint = _target.Position;
