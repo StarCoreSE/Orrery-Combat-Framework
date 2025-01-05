@@ -1,6 +1,5 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
-using Orrery.HeartModule.Shared.Utility;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;

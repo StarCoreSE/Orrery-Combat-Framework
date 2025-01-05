@@ -1,6 +1,4 @@
 ﻿using Orrery.HeartModule.Shared.Targeting.Generics;
-using VRage.Game.Entity;
-using VRage.ModAPI;
 using VRageMath;
 
 namespace Orrery.HeartModule.Server.Weapons.Targeting

@@ -1,5 +1,4 @@
 ﻿using System;
-using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using VRageMath;

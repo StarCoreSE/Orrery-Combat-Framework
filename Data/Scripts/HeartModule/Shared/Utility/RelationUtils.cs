@@ -1,10 +1,8 @@
 ﻿using System.Linq;
-using Orrery.HeartModule.Shared.Targeting;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
 
 namespace Orrery.HeartModule.Shared.Utility
 {

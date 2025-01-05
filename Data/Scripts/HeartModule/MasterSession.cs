@@ -1,12 +1,8 @@
 ﻿using System;
-using Orrery.HeartModule.Client;
-using Orrery.HeartModule.Server;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
-using VRage.Game.ModAPI;
-using VRage.Utils;
 
 namespace Orrery.HeartModule
 {

@@ -1,6 +1,5 @@
 ﻿using Orrery.HeartModule.Client.Networking;
 using Orrery.HeartModule.Server.Networking;
-using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using ProtoBuf;
 using Sandbox.ModAPI;

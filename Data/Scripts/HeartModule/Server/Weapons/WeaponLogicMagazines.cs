@@ -1,9 +1,6 @@
 ﻿using System;
 using Orrery.HeartModule.Shared.Definitions;
-using Orrery.HeartModule.Shared.Logging;
-using Orrery.HeartModule.Shared.WeaponSettings;
 using Sandbox.Game;
-using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
 using VRage.ModAPI;
-using VRage.Noise.Patterns;
 using VRageMath;
 
 namespace Orrery.HeartModule.Server.Projectiles

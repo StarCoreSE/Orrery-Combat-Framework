@@ -1,5 +1,4 @@
-﻿using VRage.ModAPI;
-using VRageMath;
+﻿using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Targeting.Generics
 {

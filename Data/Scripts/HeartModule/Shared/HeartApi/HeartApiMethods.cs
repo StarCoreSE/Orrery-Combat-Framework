@@ -1,10 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
-using Sandbox.ModAPI;
-using VRage.Game.Entity;
-using VRageMath;
 
 namespace Orrery.HeartModule.Shared.HeartApi
 {

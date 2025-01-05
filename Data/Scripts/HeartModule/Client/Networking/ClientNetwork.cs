@@ -7,7 +7,6 @@ using System.Linq;
 using Orrery.HeartModule.Server.Networking;
 using ProtoBuf;
 using VRage.Game.ModAPI;
-using VRageMath;
 
 namespace Orrery.HeartModule.Client.Networking
 {

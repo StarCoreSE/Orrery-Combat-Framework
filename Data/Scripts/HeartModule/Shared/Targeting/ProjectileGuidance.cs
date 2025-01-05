@@ -3,7 +3,6 @@ using Orrery.HeartModule.Shared.Definitions;
 using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Orrery.HeartModule.Shared.Utility;
-using Sandbox.Game.EntityComponents;
 using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Targeting

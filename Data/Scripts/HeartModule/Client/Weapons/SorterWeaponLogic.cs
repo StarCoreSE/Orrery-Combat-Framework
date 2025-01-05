@@ -1,8 +1,6 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
-using Orrery.HeartModule.Shared.Utility;
 using Orrery.HeartModule.Shared.WeaponSettings;
-using Sandbox.Game.EntityComponents;
 using Sandbox.ModAPI;
 using System;
 using VRage.Game.Components;

@@ -3,7 +3,6 @@ using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.Definitions;
 using VRage.Game;
-using VRage.Game.Components;
 
 namespace Orrery.HeartModule.Client.Interface
 {

@@ -1,8 +1,6 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.WeaponSettings;
 using Sandbox.ModAPI;
-using VRage.Game.Components;
-using VRage.Network;
 
 namespace Orrery.HeartModule.Client.Weapons
 {

@@ -1,9 +1,6 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
-using VRage.Game;
 
 namespace Orrery.HeartModule.Shared.Definitions
 {

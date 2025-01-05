@@ -1,7 +1,6 @@
 ﻿using System;
 using Sandbox.Game;
 using Sandbox.ModAPI;
-using VRage.Utils;
 
 namespace Orrery.HeartModule.Shared.Logging
 {

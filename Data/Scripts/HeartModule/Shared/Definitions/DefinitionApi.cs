@@ -1,12 +1,9 @@
 ﻿using Sandbox.ModAPI;
-using System.Runtime.Remoting.Channels;
 using System;
 using VRage.Game.ModAPI;
-using VRage.Game;
 using VRage.Utils;
 using System.Collections.Generic;
 using VRage;
-using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Definitions
 {
