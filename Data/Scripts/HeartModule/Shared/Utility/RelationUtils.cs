@@ -70,7 +70,30 @@ namespace Orrery.HeartModule.Shared.Utility
             return GetRelationsBetweenPlayers(owner, targetIdentity.Value).MapToBlockRelations();
         }
 
-        public static MyRelationsBetweenPlayerAndBlock GetRelationsBetweenBlockAndEntity(IMyCubeBlock thisBlock, IMyEntity entity)
+        public static MyRelationsBetweenPlayerAndBlock GetRelationsBetweenGridAndEntity(IMyCubeGrid thisGrid, MyEntity entity)
+        {
+            // Entity type
+            var grid = entity as IMyCubeGrid;
+            var character = entity as IMyCharacter;
+            if (grid != null)
+            {
+                if (grid.BigOwners.Count == 0)
+                    return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+                return GetRelationsBetweeenGrids(thisGrid, grid);
+            }
+            else if (character != null)
+            {
+                var player = HeartData.I.Players.FirstOrDefault(p => p.Character == character);
+                if (player == null) // I'm too lazy to let offline characters be fired on.
+                    return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+
+                return GetRelationsBetweenGridAndPlayer(thisGrid, player.IdentityId);
+            }
+
+            return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+        }
+
+        public static MyRelationsBetweenPlayerAndBlock GetRelationsBetweenBlockAndEntity(IMyCubeBlock thisBlock, MyEntity entity)
         {
             // Entity type
             var grid = entity as IMyCubeGrid;

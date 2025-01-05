@@ -19,7 +19,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         public SorterTurretLogic Turret { get; private set; }
         public readonly GridTargeting.GridTargeting GridTargeting;
 
-        public MyEntity Target { get; private set; }
+        public ITargetable Target { get; private set; }
 
         public TurretTargeting(SorterTurretLogic weapon)
         {
@@ -42,7 +42,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             Turret.DesiredAngle = GetAngleToTarget(TargetPosition);
         }
 
-        public void SetTarget(MyEntity target)
+        public void SetTarget(ITargetable target)
         {
             Target = target;
             UpdateTargeting();
@@ -154,11 +154,18 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
                 if (Target != null)
                     return true;
             }
-            // TODO: Projectiles
+            // Projectiles
+            if (Turret.Settings.TargetProjectilesState)
+            {
+                Target = GetFirstTargetOfType(TargetingStateEnum.Projectiles);
+
+                if (Target != null)
+                    return true;
+            }
 
             // If no other valid targets exist, check if the current target is still valid.
             // If not, keep the target as null and return "target changed."
-            if (prevTarget != null && (TargetPosition == null || prevTarget.Closed || !isPrevTargetable ||
+            if (prevTarget != null && (TargetPosition == null || prevTarget.IsClosed() || !isPrevTargetable ||
                 Vector3D.DistanceSquared(TargetPosition.Value, Turret.MuzzleMatrix.Translation) >
                 Turret.Settings.AiRange * Turret.Settings.AiRange))
                 return true;
@@ -182,10 +189,10 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             }
         }
 
-        private MyEntity GetFirstTargetOfType(TargetingStateEnum type)
+        private ITargetable GetFirstTargetOfType(TargetingStateEnum type)
         {
             // There is VERY MUCH a better way of doing this, I am so sorry.
-            return (MyEntity) GridTargeting.AvailableTargets[type].FirstOrDefault(IsRelationTargetable);
+            return GridTargeting.AvailableTargets[type].FirstOrDefault(IsRelationTargetable);
         }
 
         /// <summary>
@@ -193,11 +200,11 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        private bool IsRelationTargetable(IMyEntity entity)
+        private bool IsRelationTargetable(ITargetable entity)
         {
             if (entity == null)
                 return false;
-            var relations = RelationUtils.GetRelationsBetweenBlockAndEntity(Turret.SorterWep, entity);
+            var relations = entity.GetRelations(Turret.SorterWep);
 
             switch (relations)
             {
@@ -221,20 +228,30 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         /// </summary>
         /// <param name="entity"></param>
         /// <returns></returns>
-        private bool IsSelectionTargetable(IMyEntity entity)
+        private bool IsSelectionTargetable(ITargetable target)
         {
-            var grid = entity as IMyCubeGrid;
-            var character = entity as IMyCharacter;
-            if (grid != null)
+            if (target is TargetableEntity)
             {
-                if (grid.GridSizeEnum == MyCubeSize.Large)
-                    return Turret.Settings.TargetGridsState && Turret.Settings.TargetLargeGridsState;
-                return Turret.Settings.TargetGridsState && Turret.Settings.TargetSmallGridsState;
+                var entity = ((TargetableEntity)target).Entity;
+
+                var grid = entity as IMyCubeGrid;
+                var character = entity as IMyCharacter;
+                if (grid != null)
+                {
+                    if (grid.GridSizeEnum == MyCubeSize.Large)
+                        return Turret.Settings.TargetGridsState && Turret.Settings.TargetLargeGridsState;
+                    return Turret.Settings.TargetGridsState && Turret.Settings.TargetSmallGridsState;
+                }
+                else if (character != null)
+                {
+                    return Turret.Settings.TargetCharactersState;
+                }
             }
-            else if (character != null)
+            else if (target is TargetableProjectile)
             {
-                return Turret.Settings.TargetCharactersState;
+                return Turret.Settings.TargetProjectilesState;
             }
+            
 
             return false;
         }

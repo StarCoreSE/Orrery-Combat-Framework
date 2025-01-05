@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Server.Weapons;
 using Orrery.HeartModule.Shared.Targeting;
 using Orrery.HeartModule.Shared.Utility;
@@ -57,17 +58,13 @@ namespace Orrery.HeartModule.Server.GridTargeting
         /// <summary>
         /// Preferred targets of each type, mapped to <see cref="TargetingStateEnum">TargetingStateEnum</see>
         /// </summary>
-        public Dictionary<TargetingStateEnum, List<IMyEntity>> AvailableTargets = new Dictionary<TargetingStateEnum, List<IMyEntity>>
+        public Dictionary<TargetingStateEnum, List<ITargetable>> AvailableTargets = new Dictionary<TargetingStateEnum, List<ITargetable>>
         {
-            [TargetingStateEnum.Grids] = new List<IMyEntity>(),
-            [TargetingStateEnum.LargeGrids] = new List<IMyEntity>(),
-            [TargetingStateEnum.SmallGrids] = new List<IMyEntity>(),
-            [TargetingStateEnum.Projectiles] = new List<IMyEntity>(),
-            [TargetingStateEnum.Characters] = new List<IMyEntity>(),
-            [TargetingStateEnum.Friendlies] = new List<IMyEntity>(),
-            [TargetingStateEnum.Neutrals] = new List<IMyEntity>(),
-            [TargetingStateEnum.Enemies] = new List<IMyEntity>(),
-            [TargetingStateEnum.Unowned] = new List<IMyEntity>(),
+            [TargetingStateEnum.Grids] = new List<ITargetable>(),
+            [TargetingStateEnum.LargeGrids] = new List<ITargetable>(),
+            [TargetingStateEnum.SmallGrids] = new List<ITargetable>(),
+            [TargetingStateEnum.Projectiles] = new List<ITargetable>(),
+            [TargetingStateEnum.Characters] = new List<ITargetable>(),
         };
 
         public TargetingStateEnum AllowedTargetTypes { get; private set; }
@@ -143,7 +140,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
                 _entityBuffer = _entityBuffer.Where(ent => (ent is IMyCharacter || ent is IMyCubeGrid) && !attachedGrids.Contains(ent as IMyCubeGrid)).ToList();
             }
 
-            // Get valid target types
+            // Sort targets
             {
                 // Always allow grid targeting
                 AllowedTargetTypes = TargetingStateEnum.Grids | TargetingStateEnum.LargeGrids | TargetingStateEnum.SmallGrids;
@@ -162,13 +159,11 @@ namespace Orrery.HeartModule.Server.GridTargeting
                     var character = entity as IMyCharacter;
                     if (grid != null)
                     {
-                        AvailableTargets[TargetingStateEnum.Grids].Add(grid);
+                        AvailableTargets[TargetingStateEnum.Grids].Add(new TargetableEntity(grid));
                         if (grid.GridSizeEnum == MyCubeSize.Large)
-                            AvailableTargets[TargetingStateEnum.LargeGrids].Add(grid);
+                            AvailableTargets[TargetingStateEnum.LargeGrids].Add(new TargetableEntity(grid));
                         else
-                            AvailableTargets[TargetingStateEnum.SmallGrids].Add(grid);
-
-                        relations = RelationUtils.GetRelationsBetweeenGrids(Grid, grid);
+                            AvailableTargets[TargetingStateEnum.SmallGrids].Add(new TargetableEntity(grid));
                     }
                     else if (character != null)
                     {
@@ -176,30 +171,19 @@ namespace Orrery.HeartModule.Server.GridTargeting
                         if (player == null) // I'm too lazy to let offline characters be fired on.
                             continue;
 
-                        AvailableTargets[TargetingStateEnum.Characters].Add(character);
-                        relations = RelationUtils.GetRelationsBetweenGridAndPlayer(Grid, player.IdentityId);
+                        AvailableTargets[TargetingStateEnum.Characters].Add(new TargetableEntity(character));
                     }
+                }
 
-                    // Relation type
-                    // Relations should always be set because only grids and characters can be in the entity buffer.
-                    switch (relations)
+                // Don't waste cpu time looking for projectiles if we can't target them.
+                if ((AllowedTargetTypes & TargetingStateEnum.Projectiles) == TargetingStateEnum.Projectiles)
+                {
+                    foreach (var projectile in ProjectileManager.GetProjectilesInSphere(_targetingSphere))
                     {
-                        case MyRelationsBetweenPlayerAndBlock.NoOwnership:
-                            AvailableTargets[TargetingStateEnum.Unowned].Add(entity);
-                            break;
-                        case MyRelationsBetweenPlayerAndBlock.Owner:
-                        case MyRelationsBetweenPlayerAndBlock.Friends:
-                        case MyRelationsBetweenPlayerAndBlock.FactionShare:
-                            AvailableTargets[TargetingStateEnum.Friendlies].Add(entity);
-                            break;
-                        case MyRelationsBetweenPlayerAndBlock.Neutral:
-                            AvailableTargets[TargetingStateEnum.Neutrals].Add(entity);
-                            break;
-                        case MyRelationsBetweenPlayerAndBlock.Enemies:
-                            AvailableTargets[TargetingStateEnum.Enemies].Add(entity);
-                            break;
-                        default:
-                            throw new Exception("Invalid relationship state!");
+                        var target = new TargetableProjectile(projectile);
+                        var relations = target.GetRelations(Grid);
+                        if (relations == MyRelationsBetweenPlayerAndBlock.Enemies || relations == MyRelationsBetweenPlayerAndBlock.NoOwnership || relations == MyRelationsBetweenPlayerAndBlock.Neutral)
+                            AvailableTargets[TargetingStateEnum.Projectiles].Add(target);
                     }
                 }
 
