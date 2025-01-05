@@ -14,8 +14,6 @@
 | Heart Module (Workshop)| [https://steamcommunity.com/sharedfiles/filedetails/?id=3130655435](https://steamcommunity.com/sharedfiles/filedetails/?id=3130655435) |
 | Demo Mod (Workshop) | [https://steamcommunity.com/sharedfiles/filedetails/?id=3130655435](https://steamcommunity.com/sharedfiles/filedetails/?id=3130655435) |
 
-Thanks to Nerd, the creator of Vanilla+ for letting us use his code as a base for some of the initial systems.
-
 [https://steamcommunity.com/workshop/filedetails/?id=2915780227](https://steamcommunity.com/workshop/filedetails/?id=2915780227)
 
 ### Current Features:
