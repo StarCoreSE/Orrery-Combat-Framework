@@ -1,12 +1,13 @@
 ﻿using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.ModAPI;
 using VRageMath;
 
 namespace Orrery.HeartModule.Client.Projectiles
 {
-    internal class PhysicalProjectile : HitscanProjectile
+    internal class PhysicalProjectile : HitscanProjectile, IPhysicalProjectile
     {
-        public Vector3D Velocity;
+        public Vector3D Velocity { get; set; }
 
         public PhysicalProjectile(SerializedSpawnProjectile data) : base(data)
         {

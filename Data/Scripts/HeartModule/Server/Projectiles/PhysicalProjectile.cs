@@ -1,5 +1,6 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -7,10 +8,10 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Server.Projectiles
 {
-    internal class PhysicalProjectile : HitscanProjectile
+    internal class PhysicalProjectile : HitscanProjectile, IPhysicalProjectile
     {
-        public Vector3D InheritedVelocity = Vector3D.Zero;
-        public Vector3D Velocity;
+        public Vector3D InheritedVelocity { get; } = Vector3D.Zero;
+        public Vector3D Velocity { get; set; }
         public BoundingSphereD CollisionSphere;
 
         private float _health;
@@ -34,7 +35,6 @@ namespace Orrery.HeartModule.Server.Projectiles
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)
         {
             Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
-            Velocity = direction * Definition.PhysicalProjectileDef.Velocity;
             Health = Definition.PhysicalProjectileDef.Health;
             CollisionSphere = new BoundingSphereD(Raycast.From, Definition.PhysicalProjectileDef.ProjectileSize);
 
@@ -51,9 +51,11 @@ namespace Orrery.HeartModule.Server.Projectiles
                 else
                     ownerCenter = owner.Physics.CenterOfMassWorld;
 
-                // Add linear velocity at point
+                // Add linear velocity at point; this accounts for angular velocity and linear velocity
                 InheritedVelocity = owner.Physics.LinearVelocity + owner.Physics.AngularVelocity.Cross(start - ownerCenter);
             }
+
+            Velocity = direction * Definition.PhysicalProjectileDef.Velocity + InheritedVelocity;
         }
 
         public override void UpdateTick(double deltaTime)
@@ -70,10 +72,10 @@ namespace Orrery.HeartModule.Server.Projectiles
                 Velocity += (gravity + Raycast.Direction * Definition.PhysicalProjectileDef.Acceleration) * deltaTime;
 
                 // Raycast.From represents the projectile's position.
-                Raycast.From += (InheritedVelocity + Velocity) * deltaTime;
-                DistanceTravelled += (InheritedVelocity + Velocity).Length() * deltaTime;
+                Raycast.From += Velocity * deltaTime;
+                DistanceTravelled += Velocity.Length() * deltaTime;
 
-                Raycast.To = Raycast.From + (InheritedVelocity + Velocity) * deltaTime;
+                Raycast.To = Raycast.From + Velocity * deltaTime;
                 Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
 
                 CollisionSphere.Center = Raycast.From;
@@ -97,14 +99,14 @@ namespace Orrery.HeartModule.Server.Projectiles
         internal override SerializedSpawnProjectile ToSerializedSpawnProjectile()
         {
             var data = base.ToSerializedSpawnProjectile();
-            data.Velocity = Velocity + InheritedVelocity;
+            data.Velocity = Velocity;
             return data;
         }
 
         internal override SerializedSyncProjectile ToSerializedSyncProjectile()
         {
             var data = base.ToSerializedSyncProjectile();
-            data.Velocity = Velocity + InheritedVelocity;
+            data.Velocity = Velocity;
             return data;
         }
     }

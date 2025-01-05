@@ -1,15 +1,12 @@
 ﻿using Orrery.HeartModule.Shared.Utility;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Orrery.HeartModule.Server.GridTargeting;
 using Orrery.HeartModule.Shared.Targeting;
-using Sandbox.ModAPI;
 using VRage.Game;
-using VRage.Game.Entity;
 using VRage.Game.ModAPI;
-using VRage.ModAPI;
 using VRageMath;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 
 namespace Orrery.HeartModule.Server.Weapons.Targeting
 {

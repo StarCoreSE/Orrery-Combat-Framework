@@ -4,6 +4,7 @@ using Orrery.HeartModule.Shared.Utility;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game;
 using VRage.Game;
 using VRage.Game.Entity;
@@ -12,12 +13,38 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Client.Projectiles
 {
-    internal class HitscanProjectile
+    internal class HitscanProjectile : IHitscanProjectile
     {
         public readonly uint Id;
-        public readonly ProjectileDefinitionBase Definition;
-        public readonly IMyEntity Owner;
+        public ProjectileDefinitionBase Definition { get; }
+        public IMyEntity Owner { get; }
         public LineD Raycast;
+
+        public Vector3D Position
+        {
+            get
+            {
+                return Raycast.From;
+            }
+            set
+            {
+                Raycast.From = value;
+            }
+        }
+
+        public Vector3D Direction
+        {
+            get
+            {
+                return Raycast.Direction;
+            }
+            set
+            {
+                Raycast.Direction = value;
+            }
+        }
+
+        public bool IsActive { get; set; } = true;
         public MatrixD ProjectileMatrix = MatrixD.Identity;
         public bool HasImpacted = false;
 

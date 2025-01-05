@@ -185,7 +185,7 @@ namespace Orrery.HeartModule.Shared.Definitions
         /// Maximum G-force the projectile can sustain.
         /// </summary>
         [ProtoMember(12)] public float MaxGs;
-        [ProtoMember(13)] public Definition_PID? PID;
+        [ProtoMember(13)] public PidDef? Pid;
     }
 
 
@@ -198,7 +198,7 @@ namespace Orrery.HeartModule.Shared.Definitions
     }
 
     [ProtoContract]
-    public struct Definition_PID
+    public struct PidDef
     {
         /// <summary>
         /// Direct response to error

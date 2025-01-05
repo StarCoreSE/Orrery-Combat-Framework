@@ -4,6 +4,7 @@ using System.Linq;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Server.Weapons;
 using Orrery.HeartModule.Shared.Targeting;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Character;
@@ -203,7 +204,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
                 // Sort targets by distance to grid
                 var gridPosition = Grid.PositionComp.GetPosition();
                 foreach (var list in AvailableTargets.ToArray())
-                    AvailableTargets[list.Key] = list.Value.OrderBy(ent => Vector3D.DistanceSquared(gridPosition, ent.GetPosition())).ToList();
+                    AvailableTargets[list.Key] = list.Value.OrderBy(ent => Vector3D.DistanceSquared(gridPosition, ent.Position)).ToList();
             }
         }
 

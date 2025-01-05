@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
-using Orrery.HeartModule.Shared.Utility;
+using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
@@ -15,19 +14,43 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Server.Projectiles
 {
-    internal class HitscanProjectile
+    internal class HitscanProjectile : IHitscanProjectile
     {
         public uint Id;
-        public ProjectileDefinitionBase Definition;
+        public ProjectileDefinitionBase Definition { get; }
         public LineD Raycast;
-        public IMyEntity Owner;
+        public IMyEntity Owner { get; }
+        public Vector3D Position
+        {
+            get
+            {
+                return Raycast.From;
+            }
+            set
+            {
+                Raycast.From = value;
+            }
+        }
+
+        public Vector3D Direction
+        {
+            get
+            {
+                return Raycast.Direction;
+            }
+            set
+            {
+                Raycast.Direction = value;
+            }
+        }
 
         private List<MyLineSegmentOverlapResult<MyEntity>> _raycastCache =
             new List<MyLineSegmentOverlapResult<MyEntity>>();
         private List<MyEntity> _areaHitCache = new List<MyEntity>();
         private HashSet<PhysicalProjectile> _projectileBuffer;
 
-        public bool IsActive = true;
+        public bool IsActive { get; set; } = true;
+
         public int HitCount = 0;
         public float Age { get; set; } = 0;
 

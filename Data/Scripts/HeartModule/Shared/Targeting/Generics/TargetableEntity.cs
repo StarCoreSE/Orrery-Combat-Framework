@@ -1,13 +1,11 @@
-﻿using Orrery.HeartModule.Server.Projectiles;
-using Orrery.HeartModule.Shared.Utility;
-using Sandbox.ModAPI;
+﻿using Orrery.HeartModule.Shared.Utility;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
-namespace Orrery.HeartModule.Shared.Targeting
+namespace Orrery.HeartModule.Shared.Targeting.Generics
 {
     internal class TargetableEntity : ITargetable
     {
@@ -20,16 +18,14 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         public TargetableEntity(IMyEntity entity)
         {
-            Entity = (MyEntity) entity;
+            Entity = (MyEntity)entity;
         }
 
         public static implicit operator TargetableEntity(MyEntity ent) => new TargetableEntity(ent);
         public static implicit operator MyEntity(TargetableEntity ent) => ent.Entity;
 
-        public Vector3D GetPosition()
-        {
-            return Entity.PositionComp.GetPosition();
-        }
+        public Vector3D Position => Entity.PositionComp.GetPosition();
+        public Vector3D Velocity => Entity.Physics.LinearVelocity;
 
         public MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeBlock block)
         {
@@ -49,29 +45,24 @@ namespace Orrery.HeartModule.Shared.Targeting
 
     internal class TargetableProjectile : ITargetable
     {
-        public readonly PhysicalProjectile Projectile;
+        public readonly IPhysicalProjectile Projectile;
 
-        public TargetableProjectile(PhysicalProjectile entity)
+        public TargetableProjectile(IPhysicalProjectile entity)
         {
             Projectile = entity;
         }
 
-        public static implicit operator TargetableProjectile(PhysicalProjectile ent) => new TargetableProjectile(ent);
-        public static implicit operator PhysicalProjectile(TargetableProjectile ent) => ent.Projectile;
-
-        public Vector3D GetPosition()
-        {
-            return Projectile.Raycast.From;
-        }
+        public Vector3D Position => Projectile.Position;
+        public Vector3D Velocity => Projectile.Velocity;
 
         public MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeBlock block)
         {
-            return Projectile.Owner == null ? MyRelationsBetweenPlayerAndBlock.NoOwnership : RelationUtils.GetRelationsBetweenBlockAndEntity(block, (MyEntity) Projectile.Owner);
+            return Projectile.Owner == null ? MyRelationsBetweenPlayerAndBlock.NoOwnership : RelationUtils.GetRelationsBetweenBlockAndEntity(block, (MyEntity)Projectile.Owner);
         }
 
         public MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeGrid grid)
         {
-            return Projectile.Owner == null ? MyRelationsBetweenPlayerAndBlock.NoOwnership : RelationUtils.GetRelationsBetweenGridAndEntity(grid, (MyEntity) Projectile.Owner);
+            return Projectile.Owner == null ? MyRelationsBetweenPlayerAndBlock.NoOwnership : RelationUtils.GetRelationsBetweenGridAndEntity(grid, (MyEntity)Projectile.Owner);
         }
 
         public bool IsClosed()
@@ -80,9 +71,10 @@ namespace Orrery.HeartModule.Shared.Targeting
         }
     }
 
-    internal interface ITargetable
+    public interface ITargetable
     {
-        Vector3D GetPosition();
+        Vector3D Position { get; }
+        Vector3D Velocity { get; }
         MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeBlock block);
         MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeGrid grid);
         bool IsClosed();

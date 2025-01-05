@@ -1,4 +1,4 @@
-﻿using Orrery.HeartModule.Shared.Targeting;
+﻿using Orrery.HeartModule.Shared.Targeting.Generics;
 using VRage.Game.Entity;
 using VRage.ModAPI;
 using VRageMath;
