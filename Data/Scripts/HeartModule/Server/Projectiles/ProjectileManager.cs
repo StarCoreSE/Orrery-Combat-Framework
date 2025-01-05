@@ -32,7 +32,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         public void Update()
         {
-            foreach (var projectile in _projectiles)
+            MyAPIGateway.Parallel.ForEach(_projectiles, projectile =>
             {
                 projectile.UpdateTick(1/60d);
                 if (projectile.Definition.NetworkingDef.DoConstantSync) // TODO: Smart (rate-limited) network syncing
@@ -40,7 +40,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 if (!projectile.IsActive || projectile.Definition.PhysicalProjectileDef.IsHitscan)
                     _deadProjectiles.Add(projectile);
-            }
+            });
 
             foreach (var deadProjectile in _deadProjectiles)
             {
