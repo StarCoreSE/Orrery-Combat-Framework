@@ -49,7 +49,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             if (def == null || target?.Entity?.Physics == null)
                 return null;
             if (def.PhysicalProjectileDef.IsHitscan)
-                return target.Entity.PositionComp.WorldAABB.Center - target.Entity.Physics.LinearVelocity / 60f; // Because this doesn't run during simulation, offset velocity
+                return target.Entity.PositionComp.WorldAABB.Center + target.Entity.Physics.LinearVelocity / 60f; // Because this doesn't run during simulation, offset velocity
 
             return InterceptionPoint(startPos, startVel, target.Entity.PositionComp.WorldAABB.Center, target.Entity.Physics.LinearVelocity, def.PhysicalProjectileDef.Velocity);
         }
@@ -67,7 +67,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             if (def == null || target == null)
                 return null;
             if (def.PhysicalProjectileDef.IsHitscan)
-                return target.Projectile.Raycast.From - (target.Projectile.Velocity + target.Projectile.InheritedVelocity) / 60f; // Because this doesn't run during simulation, offset velocity
+                return target.Projectile.Raycast.From + (target.Projectile.Velocity + target.Projectile.InheritedVelocity) / 60f; // Because this doesn't run during simulation, offset velocity
 
             return InterceptionPoint(startPos, startVel, target.Projectile.Raycast.From, (target.Projectile.Velocity + target.Projectile.InheritedVelocity), def.PhysicalProjectileDef.Velocity);
         }

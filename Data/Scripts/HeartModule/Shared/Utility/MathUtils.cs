@@ -1,4 +1,5 @@
 ﻿using System;
+using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Utility
 {
@@ -51,6 +52,36 @@ namespace Orrery.HeartModule.Shared.Utility
             if (angleRads < -limit)
                 return (angleRads % limit) + limit;
             return angleRads;
+        }
+
+        public static bool LineIntersect(this BoundingSphereD sphere, LineD line)
+        {
+            Vector3D v = line.From - sphere.Center;
+            double num1 = line.Direction.Dot(line.Direction);
+            double num2 = 2.0 * v.Dot(line.Direction);
+            double num3 = v.Dot(v) - sphere.Radius * sphere.Radius;
+            double d = num2 * num2 - 4.0 * num1 * num3;
+            if (d < 0.0)
+                return false;
+            double tmin = (-num2 - Math.Sqrt(d)) / (2.0 * num1);
+            double tmax = (-num2 + Math.Sqrt(d)) / (2.0 * num1);
+            if (tmin > tmax)
+            {
+                double num4 = tmin;
+                tmin = tmax;
+                tmax = num4;
+            }
+            return tmin <= line.Length;
+        }
+
+        public static bool RayIntersect(this BoundingSphereD sphere, LineD line)
+        {
+            Vector3D v = line.From - sphere.Center;
+            double a = line.Direction.Dot(line.Direction);
+            double b = 2 * v.Dot(line.Direction);
+            double c = v.Dot(v) - sphere.Radius * sphere.Radius;
+            double discriminant = b*b - 4*a*c;
+            return discriminant > 0;
         }
     }
 }

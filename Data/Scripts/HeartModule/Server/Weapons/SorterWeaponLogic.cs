@@ -99,9 +99,10 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public void OnClosing(IMyEntity entity)
         {
-            GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid)?.RemoveWeapon(this);
+            GridTargetingManager.TryGetGridTargeting(SorterWep.CubeGrid)?.RemoveWeapon(this);
             WeaponManager.RemoveWeapon(Id);
             MarkedForClose = true;
+            SorterWep.OnClosing -= OnClosing;
         }
 
         public virtual MatrixD CalcMuzzleMatrix(int id, bool local = false)
@@ -183,7 +184,6 @@ namespace Orrery.HeartModule.Server.Weapons
                 {
                     SorterWep.CubeGrid.Physics?.ApplyImpulse(muzzleMatrix.Backward * ammoDef.UngroupedDef.Recoil, muzzleMatrix.Translation);
                     var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep);
-
                     //if (newProjectile == null) // Emergency failsafe
                     //    return;
                     //

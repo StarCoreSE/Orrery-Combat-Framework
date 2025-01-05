@@ -67,6 +67,11 @@ namespace Orrery.HeartModule.Server.GridTargeting
             [TargetingStateEnum.Characters] = new List<ITargetable>(),
         };
 
+        /// <summary>
+        /// Maps targets to number of turrets locked. Used for PreferUnique
+        /// </summary>
+        public Dictionary<ITargetable, int> TargetLocks = new Dictionary<ITargetable, int>();
+
         public TargetingStateEnum AllowedTargetTypes { get; private set; }
 
         #region Internal
@@ -142,10 +147,15 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
             // Sort targets
             {
+                TargetLocks.Clear();
+
                 // Always allow grid targeting
                 AllowedTargetTypes = TargetingStateEnum.Grids | TargetingStateEnum.LargeGrids | TargetingStateEnum.SmallGrids;
                 foreach (var turret in AllWeapons.OfType<SorterTurretLogic>())
+                {
                     AllowedTargetTypes |= (TargetingStateEnum) turret.Settings.TargetStateContainer;
+                    UpdateTurretTarget(turret.Targeting.Target, true);
+                }
 
                 foreach (var list in AvailableTargets.Values)
                     list.Clear();
@@ -203,6 +213,27 @@ namespace Orrery.HeartModule.Server.GridTargeting
         #endregion
 
         #region Interface
+
+        public void UpdateTurretTarget(ITargetable target, bool isLocked)
+        {
+            if (target == null)
+                return;
+
+            if (isLocked)
+            {
+                if (!TargetLocks.ContainsKey(target))
+                    TargetLocks[target] = 1;
+                else
+                    TargetLocks[target]++;
+            }
+            else
+            {
+                if (!TargetLocks.ContainsKey(target))
+                    TargetLocks[target] = 0;
+                else
+                    TargetLocks[target]--;
+            }
+        }
 
         public void AddWeapon(SorterWeaponLogic weapon)
         {

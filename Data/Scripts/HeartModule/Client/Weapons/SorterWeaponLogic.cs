@@ -25,7 +25,7 @@ namespace Orrery.HeartModule.Client.Weapons
             Definition = definition;
             Id = id;
 
-            sorterWep.OnClose += ent => WeaponManager.RemoveWeapon(Id);
+            sorterWep.OnClose += OnClose;
 
             sorterWep.GameLogic.Container.Add(this);
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
@@ -59,6 +59,12 @@ namespace Orrery.HeartModule.Client.Weapons
             {
                 SoftHandle.RaiseException(ex, typeof(SorterWeaponLogic));
             }
+        }
+
+        public void OnClose(IMyEntity ent)
+        {
+            WeaponManager.RemoveWeapon(Id);
+            SorterWep.OnClose -= OnClose;
         }
     }
 }

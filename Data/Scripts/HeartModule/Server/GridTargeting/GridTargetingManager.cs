@@ -12,6 +12,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
         private HashSet<GridTargeting> _gridTargetings = new HashSet<GridTargeting>();
 
         public static GridTargeting GetGridTargeting(IMyCubeGrid grid) => _._gridTargetings.First(targeting => targeting.Grid == grid);
+        public static GridTargeting TryGetGridTargeting(IMyCubeGrid grid) => _._gridTargetings.FirstOrDefault(targeting => targeting.Grid == grid);
 
         public GridTargetingManager()
         {

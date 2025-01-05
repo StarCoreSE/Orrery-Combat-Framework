@@ -1,6 +1,5 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
-using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -25,7 +24,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             {
                 _health = value;
                 if (_health <= 0 && Definition.PhysicalProjectileDef.Health > 0)
-                    ProjectileManager.CloseProjectile(this);
+                    IsActive = false;
             }
         }
 

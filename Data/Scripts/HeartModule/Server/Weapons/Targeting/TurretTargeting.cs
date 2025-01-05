@@ -1,5 +1,6 @@
 ﻿using Orrery.HeartModule.Shared.Utility;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Orrery.HeartModule.Server.GridTargeting;
 using Orrery.HeartModule.Shared.Targeting;
@@ -31,13 +32,16 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
 
         public void UpdateTargeting()
         {
-            MyAPIGateway.Utilities.ShowMessage("", "=================");
-            foreach (var target in GridTargeting.AvailableTargets)
-                MyAPIGateway.Utilities.ShowMessage("", $"{target.Key}: {target.Value.Count}");
-
             UpdateTargetPosition();
+            var prevTarget = Target;
             if (TrySelectTarget())
+            {
+                GridTargeting.UpdateTurretTarget(prevTarget, false);
+                GridTargeting.UpdateTurretTarget(Target, true);
                 UpdateTargetPosition();
+            }
+
+            MyAPIGateway.Utilities.ShowNotification($"Target: {Target?.GetType().Name ?? "None"} {(Target as TargetableProjectile)?.Projectile.Id.ToString() ?? ""} {Target?.GetRelations(Turret.SorterWep)} {TargetPosition != null}", 1000/60);
 
             Turret.DesiredAngle = GetAngleToTarget(TargetPosition);
         }
@@ -123,9 +127,10 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         /// <returns>True if the target was changed, false otherwise.</returns>
         private bool TrySelectTarget()
         {
+            // Prefer original target.
             Vector2D discard;
             bool isPrevTargetable = IsSelectionTargetable(Target) && IsRelationTargetable(Target);
-            if (CanAimAtTarget(TargetPosition, out discard) && isPrevTargetable)
+            if (!(Target?.IsClosed() ?? true) && CanAimAtTarget(TargetPosition, out discard) && isPrevTargetable)
                 return false;
 
             var prevTarget = Target;
@@ -192,6 +197,29 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         private ITargetable GetFirstTargetOfType(TargetingStateEnum type)
         {
             // There is VERY MUCH a better way of doing this, I am so sorry.
+
+            // Look for target with the least number of locks.
+            if (Turret.Settings.PreferUniqueTargetState)
+            {
+                int numLocks = int.MaxValue;
+                ITargetable bestTarget = null;
+                foreach (var target in GridTargeting.AvailableTargets[type])
+                {
+                    if (!IsRelationTargetable(target))
+                        continue;
+                    int checkLocks = 0;
+                    if (!GridTargeting.TargetLocks.TryGetValue(target, out checkLocks) || checkLocks < numLocks)
+                    {
+                        numLocks = checkLocks;
+                        bestTarget = target;
+                    }
+                    if (numLocks == 0)
+                        break;
+                }
+                return bestTarget;
+            }
+
+            // Otherwise, look for the closest target.
             return GridTargeting.AvailableTargets[type].FirstOrDefault(IsRelationTargetable);
         }
 
@@ -202,7 +230,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         /// <returns></returns>
         private bool IsRelationTargetable(ITargetable entity)
         {
-            if (entity == null)
+            if (entity == null || entity.IsClosed())
                 return false;
             var relations = entity.GetRelations(Turret.SorterWep);
 

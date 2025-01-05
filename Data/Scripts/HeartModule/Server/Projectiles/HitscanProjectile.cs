@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
@@ -143,14 +144,15 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             #region Projectile Impact Checking
 
-            if (!IsActive || Definition.DamageDef.DamageToProjectiles <= 0)
+            if (IsActive && Definition.DamageDef.DamageToProjectiles > 0)
             {
-                var collidedProjectiles = ProjectileManager.GetProjectilesInLine(Raycast);
-
-                foreach (var projectile in collidedProjectiles)
+                foreach (var projectile in ProjectileManager.GetProjectilesInLine(Raycast, projectile =>
+                         {
+                             bool ownersMatch = projectile.Owner == Owner || (projectile.Owner is IMyConveyorSorter && Owner is IMyConveyorSorter && ((IMyConveyorSorter)projectile.Owner)?.CubeGrid ==
+                                 ((IMyConveyorSorter)Owner).CubeGrid);
+                             return !(projectile == this || ownersMatch || projectile.Definition.PhysicalProjectileDef.Health <= 0);
+                         }))
                 {
-                    if (!IsActive || projectile == this || projectile.Owner == Owner || projectile.Definition.PhysicalProjectileDef.Health <= 0)
-                        break;
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
                     HitCount++;
                     CheckAreaDamage(projectile.Raycast.From, null);

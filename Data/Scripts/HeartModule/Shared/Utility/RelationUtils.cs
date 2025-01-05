@@ -75,6 +75,7 @@ namespace Orrery.HeartModule.Shared.Utility
             // Entity type
             var grid = entity as IMyCubeGrid;
             var character = entity as IMyCharacter;
+            var block = entity as IMyCubeBlock;
             if (grid != null)
             {
                 if (grid.BigOwners.Count == 0)
@@ -88,6 +89,13 @@ namespace Orrery.HeartModule.Shared.Utility
                     return MyRelationsBetweenPlayerAndBlock.NoOwnership;
 
                 return GetRelationsBetweenGridAndPlayer(thisGrid, player.IdentityId);
+            }
+            else if (block != null)
+            {
+                grid = block.CubeGrid;
+                if (grid.BigOwners.Count == 0)
+                    return MyRelationsBetweenPlayerAndBlock.NoOwnership;
+                return GetRelationsBetweeenGrids(thisGrid, grid);
             }
 
             return MyRelationsBetweenPlayerAndBlock.NoOwnership;
