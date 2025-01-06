@@ -15,7 +15,7 @@ namespace Orrery.HeartModule.Client.Weapons
         public readonly WeaponDefinitionBase Definition;
         public readonly IMyConveyorSorter SorterWep;
 
-        internal WeaponSettings Settings;
+        internal WeaponSettings Settings = null;
         internal virtual WeaponSettings CreateSettings() => new WeaponSettings(SorterWep.EntityId);
 
 
@@ -35,10 +35,14 @@ namespace Orrery.HeartModule.Client.Weapons
         {
             try
             {
-                Settings = CreateSettings();
+                if (Settings == null)
+                {
+                    Settings = CreateSettings();
+                    Settings.RequestSync();
+                }
+
                 NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
 
-                Settings.RequestSync();
             }
             catch (Exception ex)
             {
@@ -52,7 +56,7 @@ namespace Orrery.HeartModule.Client.Weapons
             {
                 if (MarkedForClose || SorterWep == null)
                     return;
-
+                MyAPIGateway.Utilities.ShowNotification("HS: " + (Settings.ShootState), 1000/60);
             }
             catch (Exception ex)
             {

@@ -156,6 +156,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
                 if (weaponClient != null)
                 {
                     weaponClient.Settings = this;
+                    HeartLog.Info("I SET THE WEAPONS STATS!!!!!!!!");
                 }
                 var weaponServer = Server.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponServer != null)
