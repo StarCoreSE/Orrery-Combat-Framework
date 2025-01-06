@@ -1,5 +1,7 @@
-﻿using Orrery.HeartModule.Client.Networking;
+﻿using System;
+using Orrery.HeartModule.Client.Networking;
 using Orrery.HeartModule.Server.Networking;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using ProtoBuf;
 using Sandbox.ModAPI;
@@ -7,19 +9,17 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Shared.WeaponSettings
 {
-    [ProtoContract]
+    [ProtoContract(UseProtoMembersOnly = true)]
     [ProtoInclude(91, typeof(SmartSettings))]
-    internal class WeaponSettings : PacketBase
+    internal class WeaponSettings
     {
+        [Obsolete("Never use this constructor. It is marked internal for protobuf.", true)]
+        internal WeaponSettings() { }
+
         public WeaponSettings(long weaponId)
         {
             WeaponId = weaponId;
         }
-
-        /// <summary>
-        /// DON'T USE THIS.
-        /// </summary>
-        internal WeaponSettings() { }
 
         /// <summary>
         /// Disables networking for this Settings instance if true.
@@ -150,7 +150,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             // Special handling for localhost
             if (MyAPIGateway.Session.IsServer && !MyAPIGateway.Utilities.IsDedicated)
             {
-                ServerNetwork.SendToEveryoneInSync(this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
+                ServerNetwork.SendToEveryoneInSync((SettingsPacket) this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
 
                 var weaponClient = Client.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponClient != null)
@@ -171,11 +171,11 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
 
             if (MyAPIGateway.Session.IsServer)
             {
-                ServerNetwork.SendToEveryoneInSync(this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
+                ServerNetwork.SendToEveryoneInSync((SettingsPacket) this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
             }
             else
             {
-                ClientNetwork.SendToServer(this);
+                ClientNetwork.SendToServer((SettingsPacket) this);
             }
         }
 
@@ -186,36 +186,6 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
         {
             if (!MyAPIGateway.Session.IsServer)
                 ClientNetwork.SendToServer(new RequestSettingsPacket(WeaponId));
-        }
-
-        public override void Received(ulong SenderSteamId)
-        {
-            if (MyAPIGateway.Session.IsServer)
-            {
-                // Special handling for localhost
-                if (!MyAPIGateway.Utilities.IsDedicated && SenderSteamId == 0)
-                    return;
-
-                var weapon = Server.Weapons.WeaponManager.GetWeapon(WeaponId);
-                if (weapon != null)
-                {
-                    bool needsReload = weapon.Settings.AmmoLoadedIdx != AmmoLoadedIdx;
-
-                    weapon.Settings = this;
-                    if (needsReload)
-                        weapon.Magazine.EmptyMagazines();
-
-                    weapon.Settings.Sync();
-                }
-            }
-            else
-            {
-                var weapon = Client.Weapons.WeaponManager.GetWeapon(WeaponId);
-                if (weapon != null)
-                {
-                    weapon.Settings = this;
-                }
-            }
         }
 
         #endregion

@@ -15,7 +15,7 @@ namespace Orrery.HeartModule.Shared.Targeting
         public readonly IPhysicalProjectile Projectile;
         public Vector3D Aimpoint { get; private set; }
 
-        private ITargetable _target;
+        public ITargetable Target { get; private set; }
 
         private double _age = 0;
         private Queue<GuidanceDef> _stages;
@@ -41,7 +41,7 @@ namespace Orrery.HeartModule.Shared.Targeting
         public void SetTarget(ITargetable target)
         {
             if (IsTargetAllowed(target))
-                _target = target;
+                Target = target;
         }
 
         public void Update(double delta)
@@ -54,8 +54,8 @@ namespace Orrery.HeartModule.Shared.Targeting
                 _currentStage = _stages.Dequeue();
                 _currentPid = _currentStage.Pid?.GetPID();
                 _stageActive = true;
-                if (!IsTargetAllowed(_target))
-                    _target = null; // TODO retarget
+                if (!IsTargetAllowed(Target))
+                    Target = null; // TODO retarget
 
                 // TODO: Sync on stage switch
             }
@@ -72,16 +72,16 @@ namespace Orrery.HeartModule.Shared.Targeting
 
             // TODO: Raycasting
 
-            if (_target == null || _target.IsClosed)
+            if (Target == null || Target.IsClosed)
                 return;
 
             if (_currentStage.UseAimPrediction)
             {
-                Aimpoint = TargetingUtils.InterceptionPoint(Projectile.Position, Vector3D.Zero, _target,
-                    (float) Projectile.Velocity.Length()) ?? _target.Position;
+                Aimpoint = TargetingUtils.InterceptionPoint(Projectile.Position, Vector3D.Zero, Target,
+                    (float) Projectile.Velocity.Length()) ?? Target.Position;
             }
             else
-                Aimpoint = _target.Position;
+                Aimpoint = Target.Position;
 
             StepDirection(delta);
         }

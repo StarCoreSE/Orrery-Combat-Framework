@@ -19,7 +19,29 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public SorterSmartLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {
+        }
 
+        internal override void LoadDefaultSettings()
+        {
+            base.LoadDefaultSettings();
+
+            Settings.LockedNetworking = true;
+            
+            Settings.PreferUniqueTargetState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetUnique) == IFFEnum.TargetUnique;
+
+            Settings.TargetGridsState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids;
+            Settings.TargetSmallGridsState = Settings.TargetGridsState;
+            Settings.TargetLargeGridsState = Settings.TargetGridsState;
+
+            Settings.TargetCharactersState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetCharacters) == TargetTypeEnum.TargetCharacters;
+            Settings.TargetProjectilesState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetProjectiles) == TargetTypeEnum.TargetProjectiles;
+
+            Settings.TargetEnemiesState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetEnemies) == IFFEnum.TargetEnemies;
+            Settings.TargetFriendliesState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetFriendlies) == IFFEnum.TargetFriendlies;
+            Settings.TargetNeutralsState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
+            Settings.TargetUnownedState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
+
+            Settings.LockedNetworking = false;
         }
 
         public override void UpdateOnceBeforeFrame()

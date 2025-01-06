@@ -16,6 +16,8 @@ namespace Orrery.HeartModule.Client.Weapons
         public readonly IMyConveyorSorter SorterWep;
 
         internal WeaponSettings Settings;
+        internal virtual WeaponSettings CreateSettings() => new WeaponSettings(SorterWep.EntityId);
+
 
         public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id)
         {
@@ -27,14 +29,13 @@ namespace Orrery.HeartModule.Client.Weapons
 
             sorterWep.GameLogic.Container.Add(this);
             NeedsUpdate = MyEntityUpdateEnum.BEFORE_NEXT_FRAME;
-
-            Settings = new WeaponSettings(sorterWep.EntityId);
         }
 
         public override void UpdateOnceBeforeFrame()
         {
             try
             {
+                Settings = CreateSettings();
                 NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
 
                 Settings.RequestSync();

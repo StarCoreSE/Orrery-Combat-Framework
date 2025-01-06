@@ -1,18 +1,17 @@
-﻿using ProtoBuf;
+﻿using System;
+using ProtoBuf;
 
 namespace Orrery.HeartModule.Shared.WeaponSettings
 {
     [ProtoContract]
     internal class TurretSettings : SmartSettings
     {
+        [Obsolete("Never use this constructor. It is marked internal for protobuf.", true)]
+        internal TurretSettings() { }
+
         public TurretSettings(long weaponId) : base(weaponId)
         {
         }
-
-        /// <summary>
-        /// DON'T USE THIS.
-        /// </summary>
-        internal TurretSettings() { }
 
         public float AiRange
         {

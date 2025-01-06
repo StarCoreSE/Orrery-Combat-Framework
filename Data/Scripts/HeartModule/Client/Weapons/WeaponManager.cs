@@ -47,6 +47,8 @@ namespace Orrery.HeartModule.Client.Weapons
 
             if (definition.Assignments.HasAzimuth && definition.Assignments.HasElevation)
                 logic = new SorterTurretLogic(sorter, definition, sorter.EntityId);
+            else if (definition.Loading.Ammos.Any(ammo => DefinitionManager.ProjectileDefinitions[ammo].Guidance.Length > 0))
+                logic = new SorterSmartLogic(sorter, definition, sorter.EntityId);
             else
                 logic = new SorterWeaponLogic(sorter, definition, sorter.EntityId);
 

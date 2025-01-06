@@ -4,23 +4,14 @@ using Sandbox.ModAPI;
 
 namespace Orrery.HeartModule.Client.Weapons
 {
-    internal class SorterTurretLogic : SorterWeaponLogic
+    internal class SorterTurretLogic : SorterSmartLogic
     {
-        public new TurretSettings Settings
-        {
-            get
-            {
-                return (TurretSettings)base.Settings;
-            }
-            set
-            {
-                base.Settings = value;
-            }
-        }
+        public new TurretSettings Settings => (TurretSettings)base.Settings;
+        internal override WeaponSettings CreateSettings() => new TurretSettings(SorterWep.EntityId);
+
 
         public SorterTurretLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {
-            Settings = new TurretSettings(sorterWep.EntityId);
         }
     }
 }

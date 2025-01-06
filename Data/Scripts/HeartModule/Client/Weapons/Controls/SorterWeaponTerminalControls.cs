@@ -59,6 +59,12 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
             return (b?.GameLogic?.GetAs<SorterWeaponLogic>()?.Definition.Loading.Ammos.Length ?? -1) > 1;
         }
 
+        static bool SmartVisibleCondition(IMyTerminalBlock b)
+        {
+            // only visible for the blocks having this gamelogic comp
+            return b?.GameLogic?.GetAs<SorterSmartLogic>() != null;
+        }
+
         static bool TurretVisibleCondition(IMyTerminalBlock b)
         {
             // only visible for the blocks having this gamelogic comp
@@ -158,99 +164,99 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetUnique",
                     "Prefer Unique Targets",
                     "TargetUniqueDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.PreferUniqueTargetState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.PreferUniqueTargetState = v
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.PreferUniqueTargetState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.PreferUniqueTargetState = v
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetGrids",
                     "Target Grids",
                     "TargetGridsDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetGridsState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetGridsState = v,
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetGridsState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetGridsState = v,
                     // Hide controls if not allowed to target
-                    (b) => ((b.GameLogic?.GetAs<SorterTurretLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
+                    (b) => ((b.GameLogic?.GetAs<SorterSmartLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetLargeGrids",
                     "Target Large Grids",
                     "TargetLargeGridsDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetLargeGridsState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetLargeGridsState = v,
-                    (b) => ((b.GameLogic?.GetAs<SorterTurretLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetLargeGridsState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetLargeGridsState = v,
+                    (b) => ((b.GameLogic?.GetAs<SorterSmartLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetSmallGrids",
                     "Target Small Grids",
                     "TargetSmallGridsDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetSmallGridsState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetSmallGridsState = v,
-                    (b) => ((b.GameLogic?.GetAs<SorterTurretLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetSmallGridsState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetSmallGridsState = v,
+                    (b) => ((b.GameLogic?.GetAs<SorterSmartLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetProjectiles",
                     "Target Projectiles",
                     "TargetProjectilesDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetProjectilesState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetProjectilesState = v,
-                    (b) => ((b.GameLogic?.GetAs<SorterTurretLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetProjectiles) == TargetTypeEnum.TargetProjectiles
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetProjectilesState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetProjectilesState = v,
+                    (b) => ((b.GameLogic?.GetAs<SorterSmartLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetProjectiles) == TargetTypeEnum.TargetProjectiles
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetCharacters",
                     "Target Characters",
                     "TargetCharactersDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetCharactersState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetCharactersState = v,
-                    (b) => ((b.GameLogic?.GetAs<SorterTurretLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetCharacters) == TargetTypeEnum.TargetCharacters
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetCharactersState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetCharactersState = v,
+                    (b) => ((b.GameLogic?.GetAs<SorterSmartLogic>()?.Definition.Targeting.AllowedTargetTypes ?? 0) & TargetTypeEnum.TargetCharacters) == TargetTypeEnum.TargetCharacters
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetFriendlies",
                     "Target Friendlies",
                     "TargetFriendliesDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetFriendliesState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetFriendliesState = v
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetFriendliesState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetFriendliesState = v
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetNeutrals",
                     "Target Neutrals",
                     "TargetNeutralsDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetNeutralsState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetNeutralsState = v
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetNeutralsState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetNeutralsState = v
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetEnemies",
                     "Target Enemies",
                     "TargetEnemiesDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetEnemiesState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetEnemiesState = v
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetEnemiesState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetEnemiesState = v
                     );
             }
             {
-                ControlsHelper.CreateToggle<SorterTurretLogic>(
+                ControlsHelper.CreateToggle<SorterSmartLogic>(
                     "HeartTargetUnowned",
                     "Target Unowned",
                     "TargetUnownedDesc",
-                    (b) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetUnownedState,
-                    (b, v) => b.GameLogic.GetAs<SorterTurretLogic>().Settings.TargetUnownedState = v
+                    (b) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetUnownedState,
+                    (b, v) => b.GameLogic.GetAs<SorterSmartLogic>().Settings.TargetUnownedState = v
                     );
             }
             #endregion

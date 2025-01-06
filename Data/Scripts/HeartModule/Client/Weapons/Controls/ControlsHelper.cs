@@ -22,6 +22,8 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
             Func<IMyTerminalBlock, bool> visibleFunc;
             if (typeof(T) == typeof(SorterTurretLogic))
                 visibleFunc = (b) => HasTurretLogic(b) && (visible?.Invoke(b) ?? true);
+            if (typeof(T) == typeof(SorterSmartLogic))
+                visibleFunc = (b) => HasSmartLogic(b) && (visible?.Invoke(b) ?? true);
             else
                 visibleFunc = (b) => HasWeaponLogic(b) && (visible?.Invoke(b) ?? true);
 
@@ -67,6 +69,12 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
         {
             // only visible for the blocks having this gamelogic comp
             return b?.GameLogic?.GetAs<SorterWeaponLogic>() != null;
+        }
+
+        static bool HasSmartLogic(IMyTerminalBlock b)
+        {
+            // only visible for the blocks having this gamelogic comp
+            return b?.GameLogic?.GetAs<SorterSmartLogic>() != null;
         }
 
         static bool HasTurretLogic(IMyTerminalBlock b)

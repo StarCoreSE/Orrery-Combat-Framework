@@ -74,6 +74,11 @@ namespace Orrery.HeartModule.Client.Projectiles
             _._queuedCloseProjectiles.Add(data.Id);
         }
 
+        public static HitscanProjectile GetProjectile(uint id)
+        {
+            return _._projectiles.GetValueOrDefault(id, null);
+        }
+
         public static int ActiveProjectiles => _?._projectiles.Count ?? -1;
     }
 }

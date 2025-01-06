@@ -254,7 +254,7 @@ namespace Orrery.HeartModule.Server.Weapons
             {
                 var loadedSettings = MyAPIGateway.Utilities.SerializeFromBinary<WeaponSettings>(Convert.FromBase64String(rawData));
 
-                if (loadedSettings != null && loadedSettings.GetType() == Settings.GetType())
+                if (loadedSettings != null)
                 {
                     Settings = loadedSettings;
                     Settings.WeaponId = Id;

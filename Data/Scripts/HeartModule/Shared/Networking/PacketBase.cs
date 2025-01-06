@@ -1,13 +1,16 @@
 ﻿using ProtoBuf;
 using System;
+using Orrery.HeartModule.Shared.WeaponSettings;
 
 namespace Orrery.HeartModule.Shared.Networking
 {
-    [ProtoInclude(1, typeof(SerializedSpawnProjectile))]
-    [ProtoInclude(2, typeof(SerializedSyncProjectile))]
-    [ProtoInclude(3, typeof(SerializedCloseProjectile))]
+    [ProtoInclude(101, typeof(SerializedSpawnProjectile))]
+    [ProtoInclude(102, typeof(SerializedSyncProjectile))]
+    [ProtoInclude(103, typeof(SerializedCloseProjectile))]
+    [ProtoInclude(104, typeof(SerializedGuidance))]
+    [ProtoInclude(105, typeof(SettingsPacket))]
     [ProtoContract(UseProtoMembersOnly = true)]
-    public abstract partial class PacketBase
+    public abstract class PacketBase
     {
         /// <summary>
         /// Called whenever your packet is recieved.
@@ -21,6 +24,8 @@ namespace Orrery.HeartModule.Shared.Networking
             typeof(SerializedSpawnProjectile),
             typeof(SerializedSyncProjectile),
             typeof(SerializedCloseProjectile),
+            typeof(SerializedGuidance),
+            typeof(SettingsPacket),
         };
     }
 }

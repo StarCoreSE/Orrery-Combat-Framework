@@ -1,4 +1,5 @@
-﻿using ProtoBuf;
+﻿using System;
+using ProtoBuf;
 
 namespace Orrery.HeartModule.Shared.WeaponSettings
 {
@@ -6,14 +7,12 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
     [ProtoInclude(92, typeof(TurretSettings))]
     internal class SmartSettings : WeaponSettings
     {
+        [Obsolete("Never use this constructor. It is marked internal for protobuf.", true)]
+        internal SmartSettings() { }
+
         public SmartSettings(long weaponId) : base(weaponId)
         {
         }
-
-        /// <summary>
-        /// DON'T USE THIS.
-        /// </summary>
-        internal SmartSettings() { }
 
         [ProtoMember(4)]
         public ushort TargetStateContainer;
