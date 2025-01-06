@@ -1,4 +1,5 @@
 ﻿using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Targeting;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.ModAPI;
 using VRageMath;
@@ -8,15 +9,21 @@ namespace Orrery.HeartModule.Client.Projectiles
     internal class PhysicalProjectile : HitscanProjectile, IPhysicalProjectile
     {
         public Vector3D Velocity { get; set; }
+        internal ProjectileGuidance Guidance = null;
 
         public PhysicalProjectile(SerializedSpawnProjectile data) : base(data)
         {
             Velocity = data.Velocity;
+
+            if (Definition.Guidance.Length > 0)
+                Guidance = new ProjectileGuidance(this);
         }
 
         public override void Update(double deltaTime = 1/60d)
         {
             #region Movement
+
+            Guidance?.Update(deltaTime);
 
             {
                 float dummyNaturalGravityInterference;

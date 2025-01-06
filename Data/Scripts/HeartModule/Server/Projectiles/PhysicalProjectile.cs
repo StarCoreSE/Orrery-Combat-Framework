@@ -1,5 +1,6 @@
 ﻿using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Targeting;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
@@ -30,7 +31,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
         }
 
-        public double DistanceTravelled { get; private set; } = 0;
+        internal ProjectileGuidance Guidance = null;
+        private double _distanceTravelled = 0;
 
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)
         {
@@ -56,12 +58,17 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
 
             Velocity = direction * Definition.PhysicalProjectileDef.Velocity + InheritedVelocity;
+
+            if (Definition.Guidance.Length > 0)
+                Guidance = new ProjectileGuidance(this);
         }
 
         public override void UpdateTick(double deltaTime)
         {
             if (!IsActive)
                 return;
+
+            Guidance?.Update(deltaTime);
 
             #region Movement
 
@@ -73,7 +80,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 // Raycast.From represents the projectile's position.
                 Raycast.From += Velocity * deltaTime;
-                DistanceTravelled += Velocity.Length() * deltaTime;
+                _distanceTravelled += Velocity.Length() * deltaTime;
 
                 Raycast.To = Raycast.From + Velocity * deltaTime;
                 Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
@@ -86,7 +93,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             #region IsActive Checking
 
             {
-                if (DistanceTravelled > Definition.PhysicalProjectileDef.MaxTrajectory)
+                if (_distanceTravelled > Definition.PhysicalProjectileDef.MaxTrajectory)
                     IsActive = false;
             }
 

@@ -16,6 +16,9 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Server.Weapons
 {
+    /// <summary>
+    /// Controls fixed weapons.
+    /// </summary>
     internal class SorterWeaponLogic : MyGameLogicComponent, IMyEventProxy
     {
         public readonly IMyConveyorSorter SorterWep;
@@ -27,6 +30,8 @@ namespace Orrery.HeartModule.Server.Weapons
         internal MatrixD MuzzleMatrix = MatrixD.Identity;
         internal WeaponLogicMagazines Magazine;
         internal WeaponSettings Settings;
+
+        internal virtual WeaponSettings CreateSettings() => new WeaponSettings(SorterWep.EntityId);
 
         public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id)
         {
@@ -41,8 +46,6 @@ namespace Orrery.HeartModule.Server.Weapons
 
             SorterWep.OnClosing += OnClosing;
 
-            Settings = new WeaponSettings(sorterWep.EntityId);
-
             GridTargetingManager.GetGridTargeting(SorterWep.CubeGrid).AddWeapon(this);
         }
 
@@ -50,6 +53,8 @@ namespace Orrery.HeartModule.Server.Weapons
         {
             try
             {
+                Settings = CreateSettings();
+
                 NeedsUpdate = MyEntityUpdateEnum.EACH_FRAME;
 
                 if (Definition.Assignments.HasMuzzleSubpart)
@@ -183,17 +188,12 @@ namespace Orrery.HeartModule.Server.Weapons
                 for (int j = 0; j < Definition.Loading.ProjectilesPerBarrel; j++)
                 {
                     SorterWep.CubeGrid.Physics?.ApplyImpulse(muzzleMatrix.Backward * ammoDef.UngroupedDef.Recoil, muzzleMatrix.Translation);
-                    var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep);
-                    //if (newProjectile == null) // Emergency failsafe
-                    //    return;
-                    //
-                    //if (newProjectile.Guidance != null) // Assign target for self-guided projectiles
-                    //{
-                    //    if (this is SorterTurretLogic)
-                    //        newProjectile.Guidance.SetTarget(((SorterTurretLogic)this).TargetEntity);
-                    //    else
-                    //        newProjectile.Guidance.SetTarget(WeaponManagerAi.I.GetTargeting(SorterWep.CubeGrid)?.PrimaryGridTarget);
-                    //}
+                    var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep) as PhysicalProjectile;
+                    
+                    if (this is SorterSmartLogic && newProjectile?.Guidance != null) // Assign target for self-guided projectiles
+                    {
+                        newProjectile.Guidance.SetTarget(((SorterSmartLogic) this).Targeting.Target);
+                    }
                 }
 
                 lastShoot -= 60f;
@@ -234,7 +234,7 @@ namespace Orrery.HeartModule.Server.Weapons
             Settings.LockedNetworking = false;
         }
 
-        internal virtual bool LoadSettings()
+        internal bool LoadSettings()
         {
             if (SorterWep.Storage == null)
             {
@@ -254,10 +254,14 @@ namespace Orrery.HeartModule.Server.Weapons
             {
                 var loadedSettings = MyAPIGateway.Utilities.SerializeFromBinary<WeaponSettings>(Convert.FromBase64String(rawData));
 
-                if (loadedSettings != null)
+                if (loadedSettings != null && loadedSettings.GetType() == Settings.GetType())
                 {
                     Settings = loadedSettings;
                     Settings.WeaponId = Id;
+
+                    // Handling for when ammo definition is changed
+                    if (Settings.AmmoLoadedIdx >= Definition.Loading.Ammos.Length)
+                        Settings.AmmoLoadedIdx = 0;
 
                     return true;
                 }

@@ -149,10 +149,10 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
                 // Always allow grid targeting
                 AllowedTargetTypes = TargetingStateEnum.Grids | TargetingStateEnum.LargeGrids | TargetingStateEnum.SmallGrids;
-                foreach (var turret in AllWeapons.OfType<SorterTurretLogic>())
+                foreach (var smartWep in AllWeapons.OfType<SorterSmartLogic>())
                 {
-                    AllowedTargetTypes |= (TargetingStateEnum) turret.Settings.TargetStateContainer;
-                    UpdateTurretTarget(turret.Targeting.Target, true);
+                    AllowedTargetTypes |= (TargetingStateEnum) smartWep.Settings.TargetStateContainer;
+                    UpdateWeaponTarget(smartWep.Targeting.Target, true);
                 }
 
                 foreach (var list in AvailableTargets.Values)
@@ -213,7 +213,7 @@ namespace Orrery.HeartModule.Server.GridTargeting
 
         #region Interface
 
-        public void UpdateTurretTarget(ITargetable target, bool isLocked)
+        public void UpdateWeaponTarget(ITargetable target, bool isLocked)
         {
             if (target == null)
                 return;

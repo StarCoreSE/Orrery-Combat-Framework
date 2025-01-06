@@ -37,10 +37,7 @@ namespace Orrery.HeartModule.Shared.Targeting.Generics
             return RelationUtils.GetRelationsBetweenGridAndEntity(grid, Entity);
         }
 
-        public bool IsClosed()
-        {
-            return Entity.Closed;
-        }
+        public bool IsClosed => Entity.Closed;
     }
 
     internal class TargetableProjectile : ITargetable
@@ -65,10 +62,7 @@ namespace Orrery.HeartModule.Shared.Targeting.Generics
             return Projectile.Owner == null ? MyRelationsBetweenPlayerAndBlock.NoOwnership : RelationUtils.GetRelationsBetweenGridAndEntity(grid, (MyEntity)Projectile.Owner);
         }
 
-        public bool IsClosed()
-        {
-            return !Projectile.IsActive;
-        }
+        public bool IsClosed => !Projectile.IsActive;
     }
 
     public interface ITargetable
@@ -77,6 +71,6 @@ namespace Orrery.HeartModule.Shared.Targeting.Generics
         Vector3D Velocity { get; }
         MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeBlock block);
         MyRelationsBetweenPlayerAndBlock GetRelations(IMyCubeGrid grid);
-        bool IsClosed();
+        bool IsClosed { get; }
     }
 }

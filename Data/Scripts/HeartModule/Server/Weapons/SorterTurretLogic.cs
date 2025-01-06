@@ -9,31 +9,23 @@ using Orrery.HeartModule.Shared.Utility;
 
 namespace Orrery.HeartModule.Server.Weapons
 {
-    internal class SorterTurretLogic : SorterWeaponLogic
+    internal class SorterTurretLogic : SorterSmartLogic
     {
-        public new TurretSettings Settings
-        {
-            get
-            {
-                return (TurretSettings)base.Settings;
-            }
-            set
-            {
-                base.Settings = value;
-            }
-        }
+        public new TurretSettings Settings => (TurretSettings)base.Settings;
 
         public float Azimuth { get; internal set; } = 0;
         public float Elevation { get; internal set; } = 0;
         public Vector2D DesiredAngle = Vector2D.Zero;
         public Vector2D HomeAngle = Vector2D.Zero;
-        public readonly TurretTargeting Targeting;
+
+        public new TurretWeaponTargeting Targeting => (TurretWeaponTargeting)base.Targeting;
+
+        internal override SmartWeaponTargeting CreateTargeting() => new TurretWeaponTargeting(this);
+        internal override WeaponSettings CreateSettings() => new TurretSettings(SorterWep.EntityId);
 
         public SorterTurretLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {
-            Settings = new TurretSettings(sorterWep.EntityId);
             HomeAngle = new Vector2D(Definition.Hardpoint.HomeAzimuth, Definition.Hardpoint.HomeElevation);
-            Targeting = new TurretTargeting(this);
         }
 
         internal override void LoadDefaultSettings()
@@ -65,14 +57,13 @@ namespace Orrery.HeartModule.Server.Weapons
             if (!SorterWep.IsWorking) // Don't turn if the turret is disabled
                 return;
 
-            Targeting.UpdateTargeting();
             UpdateTurretSubparts();
             base.UpdateAfterSimulation();
         }
 
         public override void TryShoot()
         {
-            AutoShoot = Definition.Targeting.CanAutoShoot && Targeting.IsTargetAligned && Targeting.IsTargetInRange;
+            AutoShoot = Definition.Targeting.CanAutoShoot && Targeting.IsTargetAligned && Targeting.IsInRange(Targeting.TargetPosition);
             base.TryShoot();
         }
 

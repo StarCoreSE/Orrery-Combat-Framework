@@ -3,6 +3,9 @@ using Orrery.HeartModule.Shared.Definitions;
 using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Orrery.HeartModule.Shared.Utility;
+using Sandbox.ModAPI;
+using VRage.Game;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Targeting
@@ -19,7 +22,7 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         private PID _currentPid;
         private GuidanceDef _currentStage;
-        private bool _stageActive = true;
+        private bool _stageActive = false;
 
         public ProjectileGuidance(IPhysicalProjectile projectile)
         {
@@ -28,8 +31,6 @@ namespace Orrery.HeartModule.Shared.Targeting
                 throw new Exception("No projectile guidance defined!");
 
             _stages = new Queue<GuidanceDef>(Projectile.Definition.Guidance);
-            _currentStage = _stages.Dequeue();
-            _currentPid = _stages.Peek().Pid?.GetPID();
         }
 
         public ProjectileGuidance(IPhysicalProjectile projectile, ITargetable target) : this(projectile)
@@ -39,7 +40,8 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         public void SetTarget(ITargetable target)
         {
-            _target = target;
+            if (IsTargetAllowed(target))
+                _target = target;
         }
 
         public void Update(double delta)
@@ -52,6 +54,10 @@ namespace Orrery.HeartModule.Shared.Targeting
                 _currentStage = _stages.Dequeue();
                 _currentPid = _currentStage.Pid?.GetPID();
                 _stageActive = true;
+                if (!IsTargetAllowed(_target))
+                    _target = null; // TODO retarget
+
+                // TODO: Sync on stage switch
             }
 
             // If the current stage has a defined (>0) active duration, remove it when past the defined time.
@@ -66,7 +72,7 @@ namespace Orrery.HeartModule.Shared.Targeting
 
             // TODO: Raycasting
 
-            if (_target == null || _target.IsClosed())
+            if (_target == null || _target.IsClosed)
                 return;
 
             if (_currentStage.UseAimPrediction)
@@ -127,6 +133,34 @@ namespace Orrery.HeartModule.Shared.Targeting
                                     Projectile.Direction * Projectile.Definition.PhysicalProjectileDef.Velocity;
             Projectile.Direction = Vector3.Transform(Projectile.Direction, rotationMatrix).Normalized();
             Projectile.Velocity = Vector3.Transform(Projectile.Velocity - prevVelocity, rotationMatrix) + prevVelocity;
+        }
+
+        private bool IsTargetAllowed(ITargetable target)
+        {
+            if (target == null)
+                return false;
+
+            if (!_stageActive)
+                return true;
+
+            MyRelationsBetweenPlayerAndBlock relations = MyRelationsBetweenPlayerAndBlock.Neutral;
+            if (Projectile.Owner is IMyConveyorSorter)
+                relations = target.GetRelations(Projectile.Owner as IMyConveyorSorter);
+
+            switch (relations)
+            {
+                case MyRelationsBetweenPlayerAndBlock.NoOwnership:
+                case MyRelationsBetweenPlayerAndBlock.Neutral:
+                    return (_currentStage.IFF & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
+                case MyRelationsBetweenPlayerAndBlock.Owner:
+                case MyRelationsBetweenPlayerAndBlock.Friends:
+                case MyRelationsBetweenPlayerAndBlock.FactionShare:
+                    return (_currentStage.IFF & IFFEnum.TargetFriendlies) == IFFEnum.TargetFriendlies;
+                case MyRelationsBetweenPlayerAndBlock.Enemies:
+                    return (_currentStage.IFF & IFFEnum.TargetEnemies) == IFFEnum.TargetEnemies;
+            }
+
+            return false;
         }
     }
 }

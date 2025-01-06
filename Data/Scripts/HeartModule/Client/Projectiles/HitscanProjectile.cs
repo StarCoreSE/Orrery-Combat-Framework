@@ -14,7 +14,7 @@ namespace Orrery.HeartModule.Client.Projectiles
 {
     internal class HitscanProjectile : IHitscanProjectile
     {
-        public readonly uint Id;
+        public uint Id { get; }
         public ProjectileDefinitionBase Definition { get; }
         public IMyEntity Owner { get; }
         public LineD Raycast;

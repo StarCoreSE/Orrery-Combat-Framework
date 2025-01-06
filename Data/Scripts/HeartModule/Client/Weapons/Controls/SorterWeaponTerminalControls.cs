@@ -53,6 +53,12 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
             return b?.GameLogic?.GetAs<SorterWeaponLogic>() != null;
         }
 
+        static bool AmmoVisibleCondition(IMyTerminalBlock b)
+        {
+            // only visible for the blocks having this gamelogic comp and having more ammo options than 1
+            return (b?.GameLogic?.GetAs<SorterWeaponLogic>()?.Definition.Loading.Ammos.Length ?? -1) > 1;
+        }
+
         static bool TurretVisibleCondition(IMyTerminalBlock b)
         {
             // only visible for the blocks having this gamelogic comp
@@ -108,7 +114,7 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
                 AmmoComboBox.Title = MyStringId.GetOrCompute("Ammo Type");
                 AmmoComboBox.Tooltip = MyStringId.GetOrCompute("HeartAmmoComboBoxDesc");
                 AmmoComboBox.SupportsMultipleBlocks = true;
-                AmmoComboBox.Visible = WeaponVisibleCondition;
+                AmmoComboBox.Visible = AmmoVisibleCondition;
 
                 // Link the combobox to the Terminal_Heart_AmmoComboBox property
                 AmmoComboBox.Getter = (b) =>

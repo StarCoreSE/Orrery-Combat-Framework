@@ -7,22 +7,22 @@ namespace Orrery.HeartModule.Shared.Targeting
 {
     internal static class TargetingUtils
     {
-        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, ProjectileDefinitionBase def)
-        {
-            if (def == null || target == null)
-                return null;
-            if (def.PhysicalProjectileDef.IsHitscan)
-                return target.Position - target.Velocity / 60f; // Because this doesn't run during simulation, offset velocity
-
-            return InterceptionPoint(startPos, startVel, target, def.PhysicalProjectileDef.Velocity);
-        }
-
         public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, float projectileVelocity)
         {
             if (target == null)
                 return null;
 
             return InterceptionPoint(startPos, startVel, target.Position, target.Velocity, projectileVelocity);
+        }
+
+        public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, ITargetable target, ProjectileDefinitionBase def)
+        {
+            if (def == null || target == null)
+                return null;
+            if (def.PhysicalProjectileDef.IsHitscan)
+                return target.Position;
+
+            return InterceptionPoint(startPos, startVel, target, def.PhysicalProjectileDef.Velocity);
         }
 
         public static Vector3D? InterceptionPoint(Vector3D startPos, Vector3D startVel, Vector3D targetPos, Vector3D targetVel, float projectileSpeed)

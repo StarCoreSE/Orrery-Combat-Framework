@@ -8,7 +8,7 @@ using VRageMath;
 namespace Orrery.HeartModule.Shared.WeaponSettings
 {
     [ProtoContract]
-    [ProtoInclude(91, typeof(TurretSettings))]
+    [ProtoInclude(91, typeof(SmartSettings))]
     internal class WeaponSettings : PacketBase
     {
         public WeaponSettings(long weaponId)

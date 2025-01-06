@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
@@ -34,7 +35,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             {
                 projectile.UpdateTick(1/60d);
                 if (projectile.Definition.NetworkingDef.DoConstantSync) // TODO: Smart (rate-limited) network syncing
-                    ServerNetwork.SendToEveryoneInSync((SerializedSyncProjectile) projectile, projectile.Raycast.From);
+                    ServerNetwork.SendToEveryoneInSync((SerializedSyncProjectile) projectile, projectile.Position);
             });
         }
 
@@ -50,7 +51,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             foreach (var deadProjectile in _deadProjectiles)
             {
-                ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Raycast.From);
+                ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);
                 _projectiles.Remove(deadProjectile);
                 _projectilesWithHealth.Remove(deadProjectile);
             }
@@ -60,13 +61,14 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         public static void SpawnProjectile(HitscanProjectile projectile)
         {
+            if (projectile == null) throw new Exception("Tried spawning null projectile!");
             projectile.Id = _._maxProjectileId++;
             _._projectiles.Add(projectile);
 
             if (projectile.Definition.PhysicalProjectileDef.Health > 0)
                 _._projectilesWithHealth.Add(projectile);
 
-            ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Raycast.From);
+            ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Position);
         }
 
         public static HitscanProjectile SpawnProjectile(ProjectileDefinitionBase definition, Vector3D position, Vector3D direction, IMyEntity owner = null)
@@ -100,7 +102,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 var projectile = p as PhysicalProjectile;
 
                 if (projectile != null &&
-                    Vector3D.DistanceSquared(projectile.Raycast.From, sphere.Center) <=
+                    Vector3D.DistanceSquared(projectile.Position, sphere.Center) <=
                     (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius) *
                     (projectile.Definition.PhysicalProjectileDef.ProjectileSize + sphere.Radius))
                     projectiles.Add(projectile);
@@ -118,7 +120,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 var projectile = p as PhysicalProjectile;
 
                 if (projectile != null &&
-                    Vector3D.DistanceSquared(projectile.Raycast.From, line.From) <= (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) * (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) &&
+                    Vector3D.DistanceSquared(projectile.Position, line.From) <= (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) * (projectile.Definition.PhysicalProjectileDef.ProjectileSize + line.Length) &&
                     projectile.CollisionSphere.RayIntersect(line)
                     )
                     projectiles.Add(projectile);
