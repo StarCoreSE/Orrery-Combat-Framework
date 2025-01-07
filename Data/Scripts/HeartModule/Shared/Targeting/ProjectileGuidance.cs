@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Orrery.HeartModule.Shared.Utility;
+using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -24,6 +25,10 @@ namespace Orrery.HeartModule.Shared.Targeting
         private PID _currentPid;
         private GuidanceDef _currentStage;
         private bool _stageActive = false;
+        /// <summary>
+        /// The "forward velocity" of the projectile.
+        /// </summary>
+        private float _velocity;
 
         public ProjectileGuidance(IPhysicalProjectile projectile)
         {
@@ -32,6 +37,7 @@ namespace Orrery.HeartModule.Shared.Targeting
                 throw new Exception("No projectile guidance defined!");
 
             _stages = new Queue<GuidanceDef>(Projectile.Definition.Guidance);
+            _velocity = Projectile.Definition.PhysicalProjectileDef.Velocity;
         }
 
         public ProjectileGuidance(IPhysicalProjectile projectile, ITargetable target) : this(projectile)
@@ -45,7 +51,10 @@ namespace Orrery.HeartModule.Shared.Targeting
             {
                 Target = target;
                 if (networked && MyAPIGateway.Session.IsServer)
+                {
                     Server.Networking.ServerNetwork.SendToEveryoneInSync(new SerializedGuidance(this), Projectile.Position);
+                    (Projectile as Server.Projectiles.PhysicalProjectile)?.Sync();
+                }
             }
         }
 
@@ -59,10 +68,19 @@ namespace Orrery.HeartModule.Shared.Targeting
                 _currentStage = _stages.Dequeue();
                 _currentPid = _currentStage.Pid?.GetPID();
                 _stageActive = true;
+
+                // Update velocity without changing initial velocity or gravity
+                if (_currentStage.Velocity >= 0)
+                {
+                    Projectile.Velocity -= Projectile.Direction * _velocity;
+                    _velocity = _currentStage.Velocity;
+                    Projectile.Velocity += Projectile.Direction * _velocity;
+                }
+
                 if (!IsTargetAllowed(Target))
                     Target = null; // TODO retarget
 
-                // TODO: Sync on stage switch
+                (Projectile as Server.Projectiles.PhysicalProjectile)?.Sync();
             }
 
             // If the current stage has a defined (>0) active duration, remove it when past the defined time.
@@ -88,8 +106,6 @@ namespace Orrery.HeartModule.Shared.Targeting
             else
                 Aimpoint = Target.Position;
 
-            DebugDraw.AddLine(Projectile.Position, Aimpoint, Color.Red, 0);
-
             StepDirection(delta);
         }
 
@@ -102,7 +118,7 @@ namespace Orrery.HeartModule.Shared.Targeting
         /// <param name="delta">Delta time, in seconds.</param>
         private void StepDirection(double delta)
         {
-            var targetDir = (Aimpoint - Projectile.Direction).Normalized();
+            var targetDir = (Aimpoint - Projectile.Position).Normalized();
 
             // turnRate and maxGs serve as ABSOLUTE LIMITS (of the absolute value). Set to -1 (or any negative value lol lmao) if you want to disable them.
             double angleDifference = Vector3D.Angle(Projectile.Direction, targetDir);
@@ -110,34 +126,35 @@ namespace Orrery.HeartModule.Shared.Targeting
             Vector3 rotAxis = Vector3.Cross(Projectile.Direction, targetDir);
             rotAxis.Normalize();
 
-            double actualTurnRate = _currentStage.MaxTurnRate >= 0 ? _currentStage.MaxTurnRate : double.MaxValue;
+            double maxTurnRate = _currentStage.MaxTurnRate >= 0 ? _currentStage.MaxTurnRate : double.MaxValue;
 
-            if (_currentStage.MaxGs >= 0)
+            if (_currentStage.MaxGs > 0)
             {
-                double gravityLimited = Projectile.Definition.PhysicalProjectileDef.Velocity / (_currentStage.MaxGs * 9.81); // I swear to god I did the math for this, it really is that easy.
-
-                actualTurnRate = Math.Min(gravityLimited, actualTurnRate);
+                double gravityLimited = Math.Tan(_currentStage.MaxGs * 9.81/_velocity); // I swear to god I did the math for this.
+                maxTurnRate = Math.Min(gravityLimited, maxTurnRate);
             }
 
             // DELTATICK YOURSELF *RIGHT FUCKING NOW*
-            actualTurnRate *= delta;
+            maxTurnRate *= delta;
 
             // Check if we even have a PID, then set values according to result.
             double finalAngle;
             if (_currentPid != null)
             {
                 // I always want to have an angle of zero, with an offset of zero.
-                finalAngle = MathUtils.MinAbs(_currentPid.Tick(angleDifference, 0, 0, delta), actualTurnRate);
+                finalAngle = MathUtils.ClampAbs(_currentPid.Tick(-angleDifference, 0, 0, delta), maxTurnRate);
             }
             else
             {
-                finalAngle = MathUtils.ClampAbs(angleDifference, actualTurnRate);
+                finalAngle = MathUtils.ClampAbs(angleDifference, maxTurnRate);
             }
 
-
+            if (finalAngle == 0)
+                return;
+            // TODO: Missiles are dying on the client on stage change???
             Matrix rotationMatrix = Matrix.CreateFromAxisAngle(rotAxis, (float)finalAngle);
             Vector3D prevVelocity = Projectile.Velocity -
-                                    Projectile.Direction * Projectile.Definition.PhysicalProjectileDef.Velocity;
+                                    Projectile.Direction * _velocity;
             Projectile.Direction = Vector3.Transform(Projectile.Direction, rotationMatrix).Normalized();
             Projectile.Velocity = Vector3.Transform(Projectile.Velocity - prevVelocity, rotationMatrix) + prevVelocity;
         }

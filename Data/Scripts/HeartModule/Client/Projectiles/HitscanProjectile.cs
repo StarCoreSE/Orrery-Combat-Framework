@@ -3,6 +3,7 @@ using Orrery.HeartModule.Shared.Networking;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
+using Orrery.HeartModule.Client.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game;
 using VRage.Game;
@@ -35,7 +36,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             get
             {
-                return Raycast.Direction;
+                return Raycast.Direction.Normalized();
             }
             set
             {
@@ -68,7 +69,7 @@ namespace Orrery.HeartModule.Client.Projectiles
             if (data.OwnerId != 0)
                 Owner = MyAPIGateway.Entities.GetEntityById(data.OwnerId);
             Raycast = new LineD(data.Position, data.Position + data.Direction);
-            ProjectileMatrix = MatrixD.CreateWorld(Raycast.From, Raycast.Direction, Vector3D.Cross(Raycast.Direction, Vector3D.Up)); // TODO: Inherit up vector from firer.
+            ProjectileMatrix = MatrixD.CreateWorld(Position, Direction, Vector3D.Cross(Direction, Vector3D.Up)); // TODO: Inherit up vector from firer.
 
             InitEffects();
         }
@@ -82,8 +83,9 @@ namespace Orrery.HeartModule.Client.Projectiles
 
         public virtual void UpdateSync(SerializedSyncProjectile data)
         {
-            Raycast.From = data.Position;
-            Raycast.To = data.Position + data.Direction;
+            Position = data.Position;
+            Direction = data.Direction;
+            Update(ClientNetwork.I.EstimatedPing);
         }
 
         #region FX
@@ -104,13 +106,13 @@ namespace Orrery.HeartModule.Client.Projectiles
                 ProjectileEntity.NeedsWorldMatrix = false;
                 ProjectileEntity.Flags |= EntityFlags.IsNotGamePrunningStructureObject;
                 MyEntities.Add(ProjectileEntity, true);
-                ProjectileEntity.WorldMatrix = MatrixD.CreateWorld(Raycast.From, Raycast.Direction, Vector3D.Cross(Raycast.Direction, Vector3D.Up));
+                ProjectileEntity.WorldMatrix = MatrixD.CreateWorld(Position, Direction, Vector3D.Cross(Direction, Vector3D.Up));
             }
 
             if (HasAudio && Definition.AudioDef.HasTravelSound)
             {
                 ProjectileSound = new MyEntity3DSoundEmitter(null);
-                ProjectileSound.SetPosition(Raycast.From);
+                ProjectileSound.SetPosition(Position);
                 ProjectileSound.CanPlayLoopSounds = true;
                 ProjectileSound.VolumeMultiplier = Definition.AudioDef.TravelVolume;
                 ProjectileSound.CustomMaxDistance = Definition.AudioDef.TravelMaxDistance;
@@ -123,12 +125,12 @@ namespace Orrery.HeartModule.Client.Projectiles
             if (!IsVisible)
                 return;
 
-            ProjectileMatrix.Translation = Raycast.From;
-            ProjectileMatrix.Forward = Raycast.Direction;
-            ProjectileMatrix.Up = Vector3D.Cross(Raycast.Direction, ProjectileMatrix.Right);
+            ProjectileMatrix.Translation = Position;
+            ProjectileMatrix.Forward = Direction;
+            ProjectileMatrix.Up = Vector3D.Cross(Direction, ProjectileMatrix.Right);
 
             if (MaxBeamLength > 0 && Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
-                GlobalEffects.AddLine(Raycast.From, Raycast.From + Raycast.Direction * MaxBeamLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+                GlobalEffects.AddLine(Position, Position + Direction * MaxBeamLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
 
             if (Definition.VisualDef.HasAttachedParticle && !HeartData.I.IsPaused)
             {
@@ -146,7 +148,7 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             if (HasAudio && Definition.AudioDef.HasTravelSound)
             {
-                ProjectileSound.SetPosition(Raycast.From);
+                ProjectileSound.SetPosition(Position);
             }
         }
 
@@ -154,7 +156,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             if (!HasAudio || !Definition.AudioDef.HasTravelSound) return;
 
-            ProjectileSound.SetPosition(Raycast.From);
+            ProjectileSound.SetPosition(Position);
         }
 
         internal virtual void DrawImpactParticle(Vector3D impactPosition, Vector3D impactNormal) // TODO: Does not work in multiplayer
@@ -195,8 +197,8 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             if (HasImpacted)
             {
-                PlayImpactAudio(Raycast.From);
-                DrawImpactParticle(Raycast.From, Raycast.Direction);
+                PlayImpactAudio(Position);
+                DrawImpactParticle(Position, Direction);
             }
         }
     }

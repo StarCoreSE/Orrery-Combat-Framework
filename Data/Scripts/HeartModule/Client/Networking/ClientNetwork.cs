@@ -21,7 +21,8 @@ namespace Orrery.HeartModule.Client.Networking
         private int _networkLoadUpdate = 0;
 
         public double ServerTimeOffset { get; internal set; } = 0;
-        internal double EstimatedPing = 0;
+        internal double EstimatedPing = 0d;
+        private long _lastTimeSync = 0;
 
         // We only need one because it's only being sent to the server.
         private HashSet<PacketBase> _packetQueue = new HashSet<PacketBase>();
@@ -37,9 +38,12 @@ namespace Orrery.HeartModule.Client.Networking
 
         private void UpdateTimeOffset()
         {
-            EstimatedPing = DateTime.UtcNow.TimeOfDay.TotalMilliseconds;
-            if (!MyAPIGateway.Session.IsServer)
-                SendToServer(new n_TimeSyncPacket { OutgoingTimestamp = EstimatedPing });
+            // Client-host delay is always zero, so we don't need to update it.
+            if (MyAPIGateway.Session.IsServer)
+                return;
+
+            _lastTimeSync = DateTime.UtcNow.Ticks;
+            SendToServer(new TimeSyncPacket { SendTimestamp = DateTime.UtcNow.Ticks });
         }
 
         public void UnloadData()
@@ -111,29 +115,28 @@ namespace Orrery.HeartModule.Client.Networking
         /// Packet used for syncing time betweeen client and server.
         /// </summary>
         [ProtoContract]
-        internal class n_TimeSyncPacket : PacketBase
+        internal class TimeSyncPacket : PacketBase
         {
-            [ProtoMember(21)] public double OutgoingTimestamp;
-            [ProtoMember(22)] public double IncomingTimestamp;
+            [ProtoMember(1)] public long SendTimestamp = -1;
+            [ProtoMember(2)] public long ReceiveTimestamp = -1;
 
-            public n_TimeSyncPacket() { }
+            public TimeSyncPacket() { }
 
             public override void Received(ulong SenderSteamId)
             {
-                if (MyAPIGateway.Session.IsServer)
+                if (ReceiveTimestamp != -1)
                 {
-                    ServerNetwork.SendToPlayer(new n_TimeSyncPacket
-                    {
-                        IncomingTimestamp = this.OutgoingTimestamp,
-                        OutgoingTimestamp = DateTime.UtcNow.TimeOfDay.TotalMilliseconds
-                    }, SenderSteamId);
+                    I.EstimatedPing = (DateTime.UtcNow.Ticks - I._lastTimeSync) / (double) TimeSpan.TicksPerSecond;
+                    I.ServerTimeOffset = ((ReceiveTimestamp - SendTimestamp) - (DateTime.UtcNow.Ticks - I._lastTimeSync)) / (double) TimeSpan.TicksPerSecond;
+                    HeartLog.Debug("Outgoing Timestamp: " + SendTimestamp + "\nIncoming Timestamp: " + ReceiveTimestamp);
+                    HeartLog.Debug("Total ping time (ms): " + I.EstimatedPing);
                 }
                 else
                 {
-                    I.EstimatedPing = DateTime.UtcNow.TimeOfDay.TotalMilliseconds - I.EstimatedPing;
-                    I.ServerTimeOffset = OutgoingTimestamp - IncomingTimestamp - I.EstimatedPing;
-                    HeartLog.Debug("Outgoing Timestamp: " + OutgoingTimestamp + "\nIncoming Timestamp: " + IncomingTimestamp);
-                    HeartLog.Debug("Total ping time (ms): " + I.EstimatedPing);
+                    ServerNetwork.SendToPlayer(new TimeSyncPacket
+                    {
+                        ReceiveTimestamp = DateTime.UtcNow.Ticks
+                    }, SenderSteamId);
                 }
             }
         }

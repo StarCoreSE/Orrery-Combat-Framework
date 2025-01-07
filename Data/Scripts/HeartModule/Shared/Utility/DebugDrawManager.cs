@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
@@ -21,7 +22,7 @@ namespace Orrery.HeartModule.Shared.
         private const float DepthRatioF = 0.01f;
         // i'm gonna kiss digi on the 
 
-        private static DebugDraw _instance;
+        public static DebugDraw I;
         protected static readonly MyStringId MaterialDot = MyStringId.GetOrCompute("WhiteDot");
         protected static readonly MyStringId MaterialSquare = MyStringId.GetOrCompute("Square");
 
@@ -37,25 +38,25 @@ namespace Orrery.HeartModule.Shared.
         public override void LoadData()
         {
             if (!MyAPIGateway.Utilities.IsDedicated)
-                _instance = this;
+                I = this;
         }
 
         protected override void UnloadData()
         {
-            _instance = null;
+            I = null;
         }
 
         public static void AddPoint(Vector3D globalPos, Color color, float duration)
         {
-            if (_instance == null)
+            if (I == null)
                 return;
 
 
-            if (_instance._queuedPoints.ContainsKey(globalPos))
-                _instance._queuedPoints[globalPos] =
+            if (I._queuedPoints.ContainsKey(globalPos))
+                I._queuedPoints[globalPos] =
                     new MyTuple<long, Color>(DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond), color);
             else
-                _instance._queuedPoints.Add(globalPos,
+                I._queuedPoints.Add(globalPos,
                     new MyTuple<long, Color>(DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond),
                         color));
         }
@@ -75,33 +76,28 @@ namespace Orrery.HeartModule.Shared.
 
         public static void AddGridPoint(Vector3I blockPos, IMyCubeGrid grid, Color color, float duration)
         {
-            if (_instance == null)
+            if (I == null)
                 return;
 
-            if (_instance._queuedGridPoints.ContainsKey(blockPos))
-                _instance._queuedGridPoints[blockPos] =
+            lock (I._queuedGridPoints)
+            {
+                I._queuedGridPoints[blockPos] =
                     new MyTuple<long, Color, IMyCubeGrid>(
                         DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond), color, grid);
-            else
-                _instance._queuedGridPoints.Add(blockPos,
-                    new MyTuple<long, Color, IMyCubeGrid>(
-                        DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond), color, grid));
+            }
         }
 
         public static void AddLine(Vector3D origin, Vector3D destination, Color color, float duration)
         {
-            if (_instance == null)
+            if (I == null)
                 return;
 
-
-            var key = new MyTuple<Vector3D, Vector3D>(origin, destination);
-            if (_instance._queuedLinePoints.ContainsKey(key))
-                _instance._queuedLinePoints[key] =
+            lock (I._queuedLinePoints)
+            {
+                var key = new MyTuple<Vector3D, Vector3D>(origin, destination);
+                I._queuedLinePoints[key] =
                     new MyTuple<long, Color>(DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond), color);
-            else
-                _instance._queuedLinePoints.Add(key,
-                    new MyTuple<long, Color>(DateTime.UtcNow.Ticks + (long)(duration * TimeSpan.TicksPerSecond),
-                        color));
+            }
         }
 
         public override void Draw()
@@ -132,12 +128,13 @@ namespace Orrery.HeartModule.Shared.
                         _queuedLinePoints.Remove(key);
                 }
             }
-            catch
+            catch (Exception ex)
             {
-            } // Icky no error logging
+                HeartLog.Exception(ex, typeof(DebugDraw));
+            }
         }
 
-        private void DrawPoint0(Vector3D globalPos, Color color)
+        public void DrawPoint0(Vector3D globalPos, Color color)
         {
             //MyTransparentGeometry.AddPointBillboard(MaterialDot, color, globalPos, 1.25f, 0, blendType: BlendTypeEnum.PostPP);
             var depthScale = ToAlwaysOnTop(ref globalPos);
@@ -146,12 +143,12 @@ namespace Orrery.HeartModule.Shared.
                 blendType: BlendTypeEnum.LDR);
         }
 
-        private void DrawGridPoint0(Vector3I blockPos, IMyCubeGrid grid, Color color)
+        public void DrawGridPoint0(Vector3I blockPos, IMyCubeGrid grid, Color color)
         {
             DrawPoint0(GridToGlobal(blockPos, grid), color);
         }
 
-        private void DrawLine0(Vector3D origin, Vector3D destination, Color color)
+        public void DrawLine0(Vector3D origin, Vector3D destination, Color color)
         {
             var length = (float)(destination - origin).Length();
             var direction = (destination - origin) / length;

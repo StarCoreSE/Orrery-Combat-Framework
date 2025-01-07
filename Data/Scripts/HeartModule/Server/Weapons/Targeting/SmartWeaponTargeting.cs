@@ -35,7 +35,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
                 TargetPosition = GetTargetPosition(Target);
             }
 
-            MyAPIGateway.Utilities.ShowNotification($"Target: {Target?.GetType().Name ?? "None"} {(Target as TargetableProjectile)?.Projectile.Id.ToString() ?? ""} {Target?.GetRelations(Weapon.SorterWep)} {TargetPosition != null}", 1000/60);
+            MyAPIGateway.Utilities.ShowNotification($"Target: {Target?.GetType().Name ?? "None"} {(Target as TargetableEntity)?.Entity.GetFriendlyName() ?? ""}{(Target as TargetableProjectile)?.Projectile.Id.ToString() ?? ""} {Target?.GetRelations(Weapon.SorterWep)} {TargetPosition != null}", 1000/60);
         }
 
 

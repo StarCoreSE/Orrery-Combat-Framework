@@ -27,16 +27,16 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             {
                 float dummyNaturalGravityInterference;
-                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Raycast.From, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
+                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Position, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
 
                 // Update velocity based on gravity acceleration
-                Velocity += gravity * deltaTime;
+                Velocity += (gravity + Direction * Definition.PhysicalProjectileDef.Acceleration) * deltaTime;
 
-                // Raycast.From represents the projectile's position.
-                Raycast.From += Velocity * deltaTime;
+                // Position represents the projectile's position.
+                Position += Velocity * deltaTime;
 
                 // NextMoveStep is separate from Raycast.To because the raycast needs to check a bit in front of the next movement step.
-                Raycast.To = Raycast.From + Velocity * deltaTime;
+                Raycast.To = Position + Velocity * deltaTime;
             }
 
             #endregion
@@ -48,7 +48,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             MaxBeamLength = 0;
             if (Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
-                GlobalEffects.AddLine(Raycast.From, Raycast.From - Velocity.Normalized() * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+                GlobalEffects.AddLine(Position, Position - Velocity.Normalized() * Definition.VisualDef.TrailLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
 
             base.UpdateDraw(deltaTime);
         }

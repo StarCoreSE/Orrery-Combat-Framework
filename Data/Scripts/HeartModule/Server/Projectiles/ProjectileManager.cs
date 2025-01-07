@@ -49,6 +49,10 @@ namespace Orrery.HeartModule.Server.Projectiles
                     _deadProjectiles.Add(projectile);
             });
 
+            foreach (var projectile in _projectiles)
+                if (projectile.IsActive)
+                    DebugDraw.I.DrawLine0(projectile.Position, projectile.Position + projectile.Direction, Color.Red);
+
             foreach (var deadProjectile in _deadProjectiles)
             {
                 ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);

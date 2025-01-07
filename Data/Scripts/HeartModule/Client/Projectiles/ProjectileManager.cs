@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Networking;
+using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
 using VRageMath;
 
@@ -30,8 +31,11 @@ namespace Orrery.HeartModule.Client.Projectiles
                     continue;
 
                 projectile.Update();
-                if (Vector3D.DistanceSquared(projectile.Raycast.From, MyAPIGateway.Session.Camera.Position) > HeartData.I.SyncRangeSq)
+                if (Vector3D.DistanceSquared(projectile.Position, MyAPIGateway.Session.Camera.Position) > HeartData.I.SyncRangeSq)
                     _queuedCloseProjectiles.Add(projectile.Id);
+
+                if (projectile.IsActive)
+                    DebugDraw.I.DrawLine0(projectile.Position, projectile.Position + projectile.Direction, Color.Blue);
             }
 
             foreach (var projectileId in _queuedCloseProjectiles)
@@ -68,7 +72,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             if (_._projectiles.ContainsKey(data.Id))
             {
-                _._projectiles[data.Id].Raycast.From = data.Position;
+                _._projectiles[data.Id].Position = data.Position;
                 _._projectiles[data.Id].HasImpacted = data.DidImpact;
             }
             _._queuedCloseProjectiles.Add(data.Id);

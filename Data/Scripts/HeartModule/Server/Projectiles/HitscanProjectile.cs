@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
@@ -36,7 +37,7 @@ namespace Orrery.HeartModule.Server.Projectiles
         {
             get
             {
-                return Raycast.Direction;
+                return Raycast.Direction.Normalized();
             }
             set
             {
@@ -122,7 +123,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 if (!(e.Element is MyCubeGrid))
                 {
-                    OnImpact(e.Element, Raycast.From + Raycast.Direction * e.Distance);
+                    OnImpact(e.Element, Position + Direction * e.Distance);
                     continue;
                 }
 
@@ -136,8 +137,8 @@ namespace Orrery.HeartModule.Server.Projectiles
                 {
                     double closestDistance = double.MaxValue;
                     LineD testLine = Raycast;
-                    testLine.To -= Raycast.Direction * 0.5f;
-                    testLine.From += Raycast.Direction * 0.5f;
+                    testLine.To -= Direction * 0.5f;
+                    testLine.From += Direction * 0.5f;
 
                     foreach (var grid in grids)
                     {
@@ -168,7 +169,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                         CheckAreaDamage(closestIntersect, (MyEntity) closestBlock.CubeGrid);
 
                     if (Definition.UngroupedDef.Impulse != 0)
-                        closestBlock.CubeGrid.Physics?.ApplyImpulse(Raycast.Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), closestIntersect);
+                        closestBlock.CubeGrid.Physics?.ApplyImpulse(Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), closestIntersect);
                 }
             }
 
@@ -192,7 +193,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
                     HitCount++;
-                    firstImpact = projectile.Raycast.From;
+                    firstImpact = projectile.Position;
                     if (Definition.DamageDef.MaxImpacts <= 0 || HitCount >= Definition.DamageDef.MaxImpacts)
                         IsActive = false;
                 }
@@ -216,7 +217,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 IsActive = false;
 
                 if (Definition.UngroupedDef.Impulse != 0)
-                    hitEntity.Physics?.ApplyImpulse(Raycast.Direction * Definition.UngroupedDef.Impulse * (Definition.DamageDef.MaxImpacts <= 0 ? 1 : Definition.DamageDef.MaxImpacts - prevHitCount), hitPosition);
+                    hitEntity.Physics?.ApplyImpulse(Direction * Definition.UngroupedDef.Impulse * (Definition.DamageDef.MaxImpacts <= 0 ? 1 : Definition.DamageDef.MaxImpacts - prevHitCount), hitPosition);
                 return;
             }
 
@@ -227,7 +228,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 CheckAreaDamage(hitPosition, hitEntity);
 
             if (Definition.UngroupedDef.Impulse != 0)
-                hitEntity.Physics?.ApplyImpulse(Raycast.Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), hitPosition);
+                hitEntity.Physics?.ApplyImpulse(Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), hitPosition);
         }
 
         internal virtual void OnImpact(IMyDestroyableObject destroyableObject, float damageModifier = 1)
@@ -271,7 +272,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             #region Projectile AoE Damage
             if (Definition.DamageDef.DamageToProjectiles > 0 && Definition.DamageDef.DamageToProjectilesRadius > 0)
             {
-                ProjectileManager.GetProjectilesInSphere(new BoundingSphereD(Raycast.From, Definition.DamageDef.DamageToProjectilesRadius), ref _projectileBuffer);
+                ProjectileManager.GetProjectilesInSphere(new BoundingSphereD(Position, Definition.DamageDef.DamageToProjectilesRadius), ref _projectileBuffer);
 
                 foreach (var projectile in _projectileBuffer)
                     projectile.Health -= Definition.DamageDef.DamageToProjectiles;
@@ -300,6 +301,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
         }
 
+        public void Sync() => ServerNetwork.SendToEveryoneInSync((SerializedSyncProjectile) this, Position);
+
         internal virtual SerializedSpawnProjectile ToSerializedSpawnProjectile()
         {
             return new SerializedSpawnProjectile
@@ -308,8 +311,8 @@ namespace Orrery.HeartModule.Server.Projectiles
                 // ReSharper disable once PossibleInvalidOperationException
                 DefinitionId = Definition.GetId().Value,
                 Id = Id,
-                Position = Raycast.From,
-                Direction = Raycast.Direction,
+                Position = Position,
+                Direction = Direction,
                 OwnerId = Owner?.EntityId ?? 0,
             };
         }
@@ -318,8 +321,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             return new SerializedSyncProjectile
             {
                 Id = Id,
-                Direction = Raycast.Direction,
-                Position = Raycast.From,
+                Direction = Direction,
+                Position = Position,
             };
         }
 
@@ -328,7 +331,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             return new SerializedCloseProjectile
             {
                 Id = Id,
-                Position = Raycast.From,
+                Position = Position,
                 DidImpact = HitCount > 0,
             };
         }

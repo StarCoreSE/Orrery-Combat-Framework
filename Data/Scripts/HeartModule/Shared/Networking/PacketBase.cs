@@ -1,5 +1,5 @@
 ﻿using ProtoBuf;
-using System;
+using Orrery.HeartModule.Client.Networking;
 using Orrery.HeartModule.Shared.WeaponSettings;
 
 namespace Orrery.HeartModule.Shared.Networking
@@ -8,7 +8,8 @@ namespace Orrery.HeartModule.Shared.Networking
     [ProtoInclude(102, typeof(SerializedSyncProjectile))]
     [ProtoInclude(103, typeof(SerializedCloseProjectile))]
     [ProtoInclude(104, typeof(SerializedGuidance))]
-    [ProtoInclude(105, typeof(SettingsPacket))]
+    [ProtoInclude(105, typeof(ClientNetwork.TimeSyncPacket))]
+    [ProtoInclude(106, typeof(SettingsPacket))]
     [ProtoContract(UseProtoMembersOnly = true)]
     public abstract class PacketBase
     {

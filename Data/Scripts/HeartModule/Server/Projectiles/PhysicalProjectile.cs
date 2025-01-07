@@ -38,7 +38,7 @@ namespace Orrery.HeartModule.Server.Projectiles
         {
             Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
             Health = Definition.PhysicalProjectileDef.Health;
-            CollisionSphere = new BoundingSphereD(Raycast.From, Definition.PhysicalProjectileDef.ProjectileSize);
+            CollisionSphere = new BoundingSphereD(Position, Definition.PhysicalProjectileDef.ProjectileSize);
 
             if (owner?.Physics != null)
             {
@@ -74,18 +74,18 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             {
                 float dummyNaturalGravityInterference;
-                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Raycast.From, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
+                Vector3D gravity = MyAPIGateway.Physics.CalculateNaturalGravityAt(Position, out dummyNaturalGravityInterference) * Definition.PhysicalProjectileDef.GravityInfluenceMultiplier;
 
-                Velocity += (gravity + Raycast.Direction * Definition.PhysicalProjectileDef.Acceleration) * deltaTime;
+                Velocity += (gravity + Direction * Definition.PhysicalProjectileDef.Acceleration) * deltaTime;
 
-                // Raycast.From represents the projectile's position.
-                Raycast.From += Velocity * deltaTime;
+                // Position represents the projectile's position.
+                Position += Velocity * deltaTime;
                 _distanceTravelled += Velocity.Length() * deltaTime;
 
-                Raycast.To = Raycast.From + Velocity * deltaTime;
-                Raycast.To += Raycast.Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
+                Raycast.To = Position + Velocity * deltaTime;
+                Raycast.To += Direction * 0.1f; // Add some extra length to the raycast to make it more reliable; otherwise colliders could slip in between the movement steps (somehow)
 
-                CollisionSphere.Center = Raycast.From;
+                CollisionSphere.Center = Position;
             }
 
             #endregion
