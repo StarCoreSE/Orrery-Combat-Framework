@@ -7,6 +7,7 @@ using System.Linq;
 using Orrery.HeartModule.Server.Networking;
 using ProtoBuf;
 using VRage.Game.ModAPI;
+using VRage.Serialization;
 
 namespace Orrery.HeartModule.Client.Networking
 {
@@ -15,22 +16,20 @@ namespace Orrery.HeartModule.Client.Networking
         public static ClientNetwork I;
         public int NetworkLoadTicks = 240;
         public int TotalNetworkLoad { get; private set; } = 0;
-        public Dictionary<Type, int> TypeNetworkLoad = new Dictionary<Type, int>();
+        private int _bufferNetworkLoad = 0;
 
         private int _networkLoadUpdate = 0;
 
         public double ServerTimeOffset { get; internal set; } = 0;
         internal double EstimatedPing = 0;
 
+        // We only need one because it's only being sent to the server.
+        private HashSet<PacketBase> _packetQueue = new HashSet<PacketBase>();
+
         public void LoadData()
         {
             I = this;
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(HeartData.ClientNetworkId, ReceivedPacket);
-
-            foreach (var type in PacketBase.Types)
-            {
-                TypeNetworkLoad.Add(type, 0);
-            }
 
             UpdateTimeOffset();
             HeartLog.Info("Initialized client network.");
@@ -52,17 +51,18 @@ namespace Orrery.HeartModule.Client.Networking
         int _tickCounter = 0;
         public void Update()
         {
+            if (_packetQueue.Count > 0)
+            {
+                MyAPIGateway.Multiplayer.SendMessageToServer(HeartData.ServerNetworkId, MyAPIGateway.Utilities.SerializeToBinary(_packetQueue.ToArray()));
+                _packetQueue.Clear();
+            }
+
             _networkLoadUpdate--;
             if (_networkLoadUpdate <= 0)
             {
                 _networkLoadUpdate = NetworkLoadTicks;
-                TotalNetworkLoad = 0;
-                foreach (var networkLoadArray in TypeNetworkLoad.Keys.ToArray())
-                {
-                    TotalNetworkLoad += TypeNetworkLoad[networkLoadArray];
-                    TypeNetworkLoad[networkLoadArray] = 0;
-                }
-
+                TotalNetworkLoad = _bufferNetworkLoad;
+                _bufferNetworkLoad = 0;
                 TotalNetworkLoad /= (NetworkLoadTicks / 60); // Average per-second
             }
 
@@ -75,9 +75,10 @@ namespace Orrery.HeartModule.Client.Networking
         {
             try
             {
-                PacketBase packet = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase>(serialized);
-                TypeNetworkLoad[packet.GetType()] += serialized.Length;
-                HandlePacket(packet, senderSteamId);
+                PacketBase[] packets = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase[]>(serialized);
+                _bufferNetworkLoad += serialized.Length;
+                foreach (var packet in packets)
+                    HandlePacket(packet, senderSteamId);
             }
             catch (Exception ex)
             {
@@ -94,40 +95,17 @@ namespace Orrery.HeartModule.Client.Networking
 
 
 
-        public KeyValuePair<Type, int> HighestNetworkLoad()
-        {
-            Type highest = null;
+        public static void SendToServer(PacketBase packet) =>
+            I?.SendToServerInternal(packet);
 
-            foreach (var networkLoadArray in TypeNetworkLoad)
-            {
-                if (highest == null || networkLoadArray.Value > TypeNetworkLoad[highest])
-                {
-                    highest = networkLoadArray.Key;
-                }
-            }
-
-            return new KeyValuePair<Type, int>(highest, TypeNetworkLoad[highest]);
-        }
-
-        public static void SendToServer(PacketBase packet, byte[] serialized = null) =>
-            I?.SendToServerInternal(packet, serialized);
-
-        private void SendToServerInternal(PacketBase packet, byte[] serialized = null)
+        private void SendToServerInternal(PacketBase packet)
         {
             if (MyAPIGateway.Session.IsServer)
             {
                 packet.Received(0);
                 return;
             }
-
-            if (serialized == null) // only serialize if necessary, and only once.
-                serialized = MyAPIGateway.Utilities.SerializeToBinary(packet);
-
-            MyAPIGateway.Multiplayer.SendMessageToServer(HeartData.ServerNetworkId, serialized);
         }
-
-
-        List<IMyPlayer> TempPlayers = new List<IMyPlayer>();
 
         /// <summary>
         /// Packet used for syncing time betweeen client and server.

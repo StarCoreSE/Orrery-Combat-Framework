@@ -17,15 +17,5 @@ namespace Orrery.HeartModule.Shared.Networking
         /// </summary>
         /// <param name="SenderSteamId"></param>
         public abstract void Received(ulong SenderSteamId);
-
-        public static Type[] Types =
-        {
-            typeof(PacketBase),
-            typeof(SerializedSpawnProjectile),
-            typeof(SerializedSyncProjectile),
-            typeof(SerializedCloseProjectile),
-            typeof(SerializedGuidance),
-            typeof(SettingsPacket),
-        };
     }
 }

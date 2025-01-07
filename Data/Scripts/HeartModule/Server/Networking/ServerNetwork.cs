@@ -15,7 +15,9 @@ namespace Orrery.HeartModule.Server.Networking
 
         public int NetworkLoadTicks = 240;
         public int TotalNetworkLoad { get; private set; } = 0;
-        public Dictionary<Type, int> TypeNetworkLoad = new Dictionary<Type, int>();
+        private int _bufferNetworkLoad = 0;
+
+        private Dictionary<ulong, HashSet<PacketBase>> _packetQueue = new Dictionary<ulong, HashSet<PacketBase>>();
 
         private int _networkLoadUpdate = 0;
 
@@ -24,9 +26,6 @@ namespace Orrery.HeartModule.Server.Networking
         {
             I = this;
             MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(HeartData.ServerNetworkId, ReceivedPacket);
-
-            foreach (var type in PacketBase.Types)
-                TypeNetworkLoad.Add(type, 0);
 
             HeartLog.Info("Initialized ServerNetwork.");
         }
@@ -40,16 +39,20 @@ namespace Orrery.HeartModule.Server.Networking
 
         public void Update()
         {
+            foreach (var queuePair in _packetQueue)
+            {
+                if (queuePair.Value.Count == 0)
+                    continue;
+
+                MyAPIGateway.Multiplayer.SendMessageTo(HeartData.ClientNetworkId, MyAPIGateway.Utilities.SerializeToBinary(queuePair.Value.ToArray()), queuePair.Key);
+            }
+
             _networkLoadUpdate--;
             if (_networkLoadUpdate <= 0)
             {
                 _networkLoadUpdate = NetworkLoadTicks;
-                TotalNetworkLoad = 0;
-                foreach (var networkLoadArray in TypeNetworkLoad.Keys.ToArray())
-                {
-                    TotalNetworkLoad += TypeNetworkLoad[networkLoadArray];
-                    TypeNetworkLoad[networkLoadArray] = 0;
-                }
+                TotalNetworkLoad = _bufferNetworkLoad;
+                _bufferNetworkLoad = 0;
 
                 TotalNetworkLoad /= (NetworkLoadTicks / 60); // Average per-second
             }
@@ -59,9 +62,10 @@ namespace Orrery.HeartModule.Server.Networking
         {
             try
             {
-                PacketBase packet = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase>(serialized);
-                TypeNetworkLoad[packet.GetType()] += serialized.Length;
-                HandlePacket(packet, senderSteamId);
+                PacketBase[] packets = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase[]>(serialized);
+                _bufferNetworkLoad += serialized.Length;
+                foreach (var packet in packets)
+                    HandlePacket(packet, senderSteamId);
             }
             catch (Exception ex)
             {
@@ -78,30 +82,16 @@ namespace Orrery.HeartModule.Server.Networking
 
         
 
-        public KeyValuePair<Type, int> HighestNetworkLoad()
-        {
-            Type highest = null;
 
-            foreach (var networkLoadArray in TypeNetworkLoad)
-            {
-                if (highest == null || networkLoadArray.Value > TypeNetworkLoad[highest])
-                {
-                    highest = networkLoadArray.Key;
-                }
-            }
-
-            return new KeyValuePair<Type, int>(highest, TypeNetworkLoad[highest]);
-        }
-
-        public static void SendToPlayer(PacketBase packet, ulong playerSteamId, byte[] serialized = null) =>
-            I?.SendToPlayerInternal(packet, playerSteamId, serialized);
-        public static void SendToEveryone(PacketBase packet, byte[] serialized = null) =>
-            I?.SendToEveryoneInternal(packet, serialized);
-        public static void SendToEveryoneInSync(PacketBase packet, Vector3D position, byte[] serialized = null) =>
-            I?.SendToEveryoneInSyncInternal(packet, position, serialized);
+        public static void SendToPlayer(PacketBase packet, ulong playerSteamId) =>
+            I?.SendToPlayerInternal(packet, playerSteamId);
+        public static void SendToEveryone(PacketBase packet) =>
+            I?.SendToEveryoneInternal(packet);
+        public static void SendToEveryoneInSync(PacketBase packet, Vector3D position) =>
+            I?.SendToEveryoneInSyncInternal(packet, position);
 
 
-        private void SendToPlayerInternal(PacketBase packet, ulong playerSteamId, byte[] serialized = null)
+        private void SendToPlayerInternal(PacketBase packet, ulong playerSteamId)
         {
             if (playerSteamId == MyAPIGateway.Multiplayer.ServerId || playerSteamId == 0)
             {
@@ -110,18 +100,17 @@ namespace Orrery.HeartModule.Server.Networking
                 return;
             }
 
-            if (serialized == null) // only serialize if necessary, and only once.
-                serialized = MyAPIGateway.Utilities.SerializeToBinary(packet);
-
-            MyAPIGateway.Multiplayer.SendMessageTo(HeartData.ClientNetworkId, serialized, playerSteamId);
+            if (!_packetQueue.ContainsKey(playerSteamId))
+                _packetQueue[playerSteamId] = new HashSet<PacketBase>();
+            _packetQueue[playerSteamId].Add(packet);
         }
 
-        private void SendToEveryoneInternal(PacketBase packet, byte[] serialized = null)
+        private void SendToEveryoneInternal(PacketBase packet)
         {
-            TempPlayers.Clear();
-            MyAPIGateway.Players.GetPlayers(TempPlayers);
+            _tempPlayers.Clear();
+            MyAPIGateway.Players.GetPlayers(_tempPlayers);
 
-            foreach (IMyPlayer p in TempPlayers)
+            foreach (IMyPlayer p in _tempPlayers)
             {
                 // skip sending to self (server player) or back to sender
                 if (p.SteamUserId == MyAPIGateway.Multiplayer.ServerId || p.SteamUserId == 0)
@@ -131,16 +120,15 @@ namespace Orrery.HeartModule.Server.Networking
                     continue;
                 }
 
-                if (serialized == null) // only serialize if necessary, and only once.
-                    serialized = MyAPIGateway.Utilities.SerializeToBinary(packet);
-
-                MyAPIGateway.Multiplayer.SendMessageTo(HeartData.ClientNetworkId, serialized, p.SteamUserId);
+                if (!_packetQueue.ContainsKey(p.SteamUserId))
+                    _packetQueue[p.SteamUserId] = new HashSet<PacketBase>();
+                _packetQueue[p.SteamUserId].Add(packet);
             }
 
-            TempPlayers.Clear();
+            _tempPlayers.Clear();
         }
 
-        private void SendToEveryoneInSyncInternal(PacketBase packet, Vector3D position, byte[] serialized = null)
+        private void SendToEveryoneInSyncInternal(PacketBase packet, Vector3D position)
         {
             List<ulong> toSend = new List<ulong>();
             foreach (var player in HeartData.I.Players)
@@ -150,14 +138,11 @@ namespace Orrery.HeartModule.Server.Networking
             if (toSend.Count == 0)
                 return;
 
-            if (serialized == null)
-                serialized = MyAPIGateway.Utilities.SerializeToBinary(packet);
-
             foreach (var clientSteamId in toSend)
-                SendToPlayer(packet, clientSteamId, serialized);
+                SendToPlayerInternal(packet, clientSteamId);
         }
 
 
-        List<IMyPlayer> TempPlayers = new List<IMyPlayer>();
+        private readonly List<IMyPlayer> _tempPlayers = new List<IMyPlayer>();
     }
 }

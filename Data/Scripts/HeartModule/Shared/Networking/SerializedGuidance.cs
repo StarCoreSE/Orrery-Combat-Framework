@@ -48,7 +48,7 @@ namespace Orrery.HeartModule.Shared.Networking
             else
                 target = new TargetableEntity(MyAPIGateway.Entities.GetEntityById(_targetId));
 
-            guidance.SetTarget(target);
+            guidance.SetTarget(target, false);
         }
     }
 }

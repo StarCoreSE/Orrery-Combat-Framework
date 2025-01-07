@@ -56,7 +56,6 @@ namespace Orrery.HeartModule.Client.Weapons
             {
                 if (MarkedForClose || SorterWep == null)
                     return;
-                MyAPIGateway.Utilities.ShowNotification("HS: " + (Settings.ShootState), 1000/60);
             }
             catch (Exception ex)
             {

@@ -1,6 +1,7 @@
 ﻿using System;
 using Orrery.HeartModule.Shared.Definitions;
 using System.Collections.Generic;
+using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
@@ -38,10 +39,14 @@ namespace Orrery.HeartModule.Shared.Targeting
             SetTarget(target);
         }
 
-        public void SetTarget(ITargetable target)
+        public void SetTarget(ITargetable target, bool networked = true)
         {
             if (IsTargetAllowed(target))
+            {
                 Target = target;
+                if (networked && MyAPIGateway.Session.IsServer)
+                    Server.Networking.ServerNetwork.SendToEveryoneInSync(new SerializedGuidance(this), Projectile.Position);
+            }
         }
 
         public void Update(double delta)
@@ -82,6 +87,8 @@ namespace Orrery.HeartModule.Shared.Targeting
             }
             else
                 Aimpoint = Target.Position;
+
+            DebugDraw.AddLine(Projectile.Position, Aimpoint, Color.Red, 0);
 
             StepDirection(delta);
         }
