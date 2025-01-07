@@ -21,8 +21,11 @@ namespace Orrery.HeartModule.Client.Projectiles
 
         public override void Update(double deltaTime = 1/60d)
         {
-            #region Movement
+            if (deltaTime == 0)
+                return;
 
+            #region Movement
+            
             Guidance?.Update(deltaTime);
 
             {

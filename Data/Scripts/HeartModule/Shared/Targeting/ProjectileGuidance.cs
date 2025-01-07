@@ -60,6 +60,9 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         public void Update(double delta)
         {
+            if (delta == 0)
+                return;
+
             _age += delta;
 
             // Cycle to next stage if ready.
@@ -82,6 +85,7 @@ namespace Orrery.HeartModule.Shared.Targeting
 
                 (Projectile as Server.Projectiles.PhysicalProjectile)?.Sync();
             }
+
 
             // If the current stage has a defined (>0) active duration, remove it when past the defined time.
             if (_stageActive && _currentStage.ActiveDuration <= 0 && _currentStage.TriggerTime + _currentStage.ActiveDuration > _age)
@@ -149,9 +153,9 @@ namespace Orrery.HeartModule.Shared.Targeting
                 finalAngle = MathUtils.ClampAbs(angleDifference, maxTurnRate);
             }
 
-            if (finalAngle == 0)
+            if (finalAngle == 0 || double.IsNaN(finalAngle))
                 return;
-            // TODO: Missiles are dying on the client on stage change???
+
             Matrix rotationMatrix = Matrix.CreateFromAxisAngle(rotAxis, (float)finalAngle);
             Vector3D prevVelocity = Projectile.Velocity -
                                     Projectile.Direction * _velocity;

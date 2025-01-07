@@ -76,6 +76,9 @@ namespace Orrery.HeartModule.Client.Projectiles
 
         public virtual void Update(double deltaTime = 1/60d)
         {
+            if (deltaTime == 0)
+                return;
+
             MaxBeamLength = Definition.PhysicalProjectileDef.MaxTrajectory;
 
             UpdateAudio();
@@ -95,16 +98,18 @@ namespace Orrery.HeartModule.Client.Projectiles
             float f = (float)HeartData.I.Random.NextDouble(); // I don't care if this isn't synced.
             IsVisible = f <= Definition.VisualDef.VisibleChance;
             HasAudio = f <= Definition.AudioDef.SoundChance;
-
+            
             if (IsVisible && Definition.VisualDef.HasModel)
             {
                 ProjectileEntity.Init(null, Definition.VisualDef.Model, null, null);
+
                 ProjectileEntity.Render.CastShadows = false;
                 ProjectileEntity.IsPreview = true;
                 ProjectileEntity.Save = false;
                 ProjectileEntity.SyncFlag = false;
                 ProjectileEntity.NeedsWorldMatrix = false;
                 ProjectileEntity.Flags |= EntityFlags.IsNotGamePrunningStructureObject;
+
                 MyEntities.Add(ProjectileEntity, true);
                 ProjectileEntity.WorldMatrix = MatrixD.CreateWorld(Position, Direction, Vector3D.Cross(Direction, Vector3D.Up));
             }
@@ -191,7 +196,14 @@ namespace Orrery.HeartModule.Client.Projectiles
         public virtual void OnClose()
         {
             ProjectileEffect?.Close();
-            ProjectileEntity?.Close();
+
+            if (ProjectileEntity != null)
+            {
+                ProjectileEntity.PositionComp.SetWorldMatrix(ref MatrixD.Identity, null, false, false, false);
+                ProjectileEntity.InScene = false;
+                ProjectileEntity.Render.RemoveRenderObjects();
+            }
+
             ProjectileSound?.StopSound(true);
             ProjectileSound?.Cleanup();
 

@@ -58,7 +58,6 @@ namespace Orrery.HeartModule.Client
 
                 _network.Update();
                 _projectileManager.Update();
-                MyAPIGateway.Utilities.ShowNotification($"Client: {ProjectileManager.ActiveProjectiles}", 1000/60);
             }
             catch (Exception ex)
             {

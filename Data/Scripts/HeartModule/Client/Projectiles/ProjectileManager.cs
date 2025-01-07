@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
@@ -33,9 +34,6 @@ namespace Orrery.HeartModule.Client.Projectiles
                 projectile.Update();
                 if (Vector3D.DistanceSquared(projectile.Position, MyAPIGateway.Session.Camera.Position) > HeartData.I.SyncRangeSq)
                     _queuedCloseProjectiles.Add(projectile.Id);
-
-                if (projectile.IsActive)
-                    DebugDraw.I.DrawLine0(projectile.Position, projectile.Position + projectile.Direction, Color.Blue);
             }
 
             foreach (var projectileId in _queuedCloseProjectiles)
@@ -44,6 +42,8 @@ namespace Orrery.HeartModule.Client.Projectiles
                 _projectiles.Remove(projectileId);
             }
             _queuedCloseProjectiles.Clear();
+
+            MyAPIGateway.Utilities.ShowNotification($"Client: {ActiveProjectiles}", 1000/60);
         }
 
         public void UpdateDraw()

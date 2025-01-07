@@ -65,7 +65,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         public override void UpdateTick(double deltaTime)
         {
-            if (!IsActive)
+            if (!IsActive || deltaTime == 0)
                 return;
 
             Guidance?.Update(deltaTime);
