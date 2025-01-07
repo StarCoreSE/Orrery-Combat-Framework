@@ -146,7 +146,7 @@ namespace Orrery.HeartModule.Shared.Targeting
             if (_currentPid != null)
             {
                 // I always want to have an angle of zero, with an offset of zero.
-                finalAngle = MathUtils.ClampAbs(_currentPid.Tick(-angleDifference, 0, 0, delta), maxTurnRate);
+                finalAngle = MathUtils.ClampAbs(_currentPid.Tick(angleDifference, 0, 0, delta), maxTurnRate);
             }
             else
             {
