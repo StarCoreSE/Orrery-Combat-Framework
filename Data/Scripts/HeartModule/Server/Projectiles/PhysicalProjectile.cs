@@ -57,7 +57,8 @@ namespace Orrery.HeartModule.Server.Projectiles
                 InheritedVelocity = owner.Physics.LinearVelocity + owner.Physics.AngularVelocity.Cross(start - ownerCenter);
             }
 
-            Velocity = direction * Definition.PhysicalProjectileDef.Velocity + InheritedVelocity;
+            // It's okay to use a random directly here because the projectile is synced to the client afterward.
+            Velocity = direction * Definition.PhysicalProjectileDef.Velocity * (HeartData.I.Random.NextDouble() * Definition.PhysicalProjectileDef.VelocityVariance) + InheritedVelocity;
 
             if (Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);

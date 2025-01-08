@@ -14,9 +14,9 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         {
         }
 
-        public override void UpdateTargeting()
+        public override void UpdateTargeting(double delta)
         {
-            base.UpdateTargeting();
+            base.UpdateTargeting(delta);
 
             Weapon.DesiredAngle = GetAngleToTarget(TargetPosition);
         }

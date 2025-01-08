@@ -8,6 +8,7 @@ using Orrery.HeartModule.Server.GridTargeting;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Utility;
 using Orrery.HeartModule.Shared.WeaponSettings;
+using Sandbox.Game;
 using VRage.Game.Components;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
@@ -155,6 +156,7 @@ namespace Orrery.HeartModule.Server.Weapons
             else if (!(Settings.ShootState || AutoShoot) && delayCounter <= 0 && Definition.Loading.DelayUntilFire > 0) // Check for the initial delay only if not already applied
             {
                 delayCounter = Definition.Loading.DelayUntilFire;
+                MyVisualScriptLogicProvider.PlaySingleSoundAtPosition(Definition.Audio.PreShootSound, SorterWep.GetPosition()); // TODO I hate myself
             }
 
             if ((Settings.ShootState || AutoShoot) && // Is allowed to shoot
@@ -176,6 +178,9 @@ namespace Orrery.HeartModule.Server.Weapons
         {
             ProjectileDefinitionBase ammoDef =
                 DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[Magazine.SelectedAmmoIndex]];
+            // Inaccuracy in radians. If the multiplier is negative, ignore.
+            float inaccuracy = Definition.Hardpoint.ShotInaccuracy *
+                             (ammoDef.PhysicalProjectileDef.AccuracyVarianceMultiplier < 0 ? 1 : ammoDef.PhysicalProjectileDef.AccuracyVarianceMultiplier);
 
             for (int i = 0; i < Definition.Loading.BarrelsPerShot; i++)
             {
@@ -188,7 +193,10 @@ namespace Orrery.HeartModule.Server.Weapons
                 for (int j = 0; j < Definition.Loading.ProjectilesPerBarrel; j++)
                 {
                     SorterWep.CubeGrid.Physics?.ApplyImpulse(muzzleMatrix.Backward * ammoDef.UngroupedDef.Recoil, muzzleMatrix.Translation);
-                    var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, muzzleMatrix.Forward, SorterWep) as PhysicalProjectile;
+                    var direction = muzzleMatrix.Forward;
+                    if (inaccuracy > 0)
+                        direction = MathUtils.RandomCone(muzzleMatrix.Forward, inaccuracy);
+                    var newProjectile = ProjectileManager.SpawnProjectile(ammoDef, muzzlePos, direction, SorterWep) as PhysicalProjectile;
                     
                     if (this is SorterSmartLogic && newProjectile?.Guidance != null) // Assign target for self-guided projectiles
                     {

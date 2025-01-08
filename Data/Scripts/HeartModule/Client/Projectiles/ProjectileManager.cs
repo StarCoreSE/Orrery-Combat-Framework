@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Orrery.HeartModule.Client.Weapons;
 using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
@@ -59,6 +60,9 @@ namespace Orrery.HeartModule.Client.Projectiles
         {
             var projectile = data.Velocity == Vector3.NegativeInfinity ? new HitscanProjectile(data) : new PhysicalProjectile(data);
             _._projectiles.Add(data.Id, projectile);
+
+            if (projectile.Owner is IMyConveyorSorter)
+                WeaponManager.GetWeapon(projectile.Owner.EntityId)?.OnShoot();
         }
 
         public static void NetUpdateProjectile(SerializedSyncProjectile data)

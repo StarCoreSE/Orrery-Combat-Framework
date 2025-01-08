@@ -83,5 +83,11 @@ namespace Orrery.HeartModule.Shared.Utility
             double discriminant = b*b - 4*a*c;
             return discriminant > 0;
         }
+
+        public static Vector3D RandomCone(Vector3D centerDirection, double radius)
+        {
+            Vector3D axis = Vector3D.CalculatePerpendicularVector(centerDirection).Rotate(centerDirection, Math.PI * 2 * HeartData.I.Random.NextDouble());
+            return centerDirection.Rotate(axis, radius * HeartData.I.Random.NextDouble());
+        }
     }
 }

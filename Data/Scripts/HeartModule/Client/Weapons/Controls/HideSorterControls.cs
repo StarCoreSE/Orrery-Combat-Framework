@@ -25,6 +25,11 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
             return block?.GameLogic?.GetAs<SorterWeaponLogic>() == null;
         }
 
+        static bool AppendedInventoryCondition(IMyTerminalBlock block)
+        {
+            return block?.GameLogic?.GetAs<SorterWeaponLogic>()?.HasInventory ?? true;
+        }
+
         static void EditControls()
         {
             List<IMyTerminalControl> controls;
@@ -48,6 +53,9 @@ namespace Orrery.HeartModule.Client.Weapons.Controls
                             c.Visible = TerminalChainedDelegate.Create(c.Visible, AppendedCondition); // hides
                             break;
                         }
+                    case "ShowInInventory":
+                        c.Visible = TerminalChainedDelegate.Create(c.Visible, AppendedInventoryCondition);
+                        break;
                 }
             }
         }

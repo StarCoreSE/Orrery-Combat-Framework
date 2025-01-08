@@ -27,7 +27,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
             Settings.LockedNetworking = true;
             
-            Settings.PreferUniqueTargetState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetUnique) == IFFEnum.TargetUnique;
+            Settings.PreferUniqueTargetState = (Definition.Targeting.DefaultIff & IFFEnum.TargetUnique) == IFFEnum.TargetUnique;
 
             Settings.TargetGridsState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetGrids) == TargetTypeEnum.TargetGrids;
             Settings.TargetSmallGridsState = Settings.TargetGridsState;
@@ -36,10 +36,10 @@ namespace Orrery.HeartModule.Server.Weapons
             Settings.TargetCharactersState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetCharacters) == TargetTypeEnum.TargetCharacters;
             Settings.TargetProjectilesState = (Definition.Targeting.AllowedTargetTypes & TargetTypeEnum.TargetProjectiles) == TargetTypeEnum.TargetProjectiles;
 
-            Settings.TargetEnemiesState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetEnemies) == IFFEnum.TargetEnemies;
-            Settings.TargetFriendliesState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetFriendlies) == IFFEnum.TargetFriendlies;
-            Settings.TargetNeutralsState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
-            Settings.TargetUnownedState = (Definition.Targeting.DefaultIFF & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
+            Settings.TargetEnemiesState = (Definition.Targeting.DefaultIff & IFFEnum.TargetEnemies) == IFFEnum.TargetEnemies;
+            Settings.TargetFriendliesState = (Definition.Targeting.DefaultIff & IFFEnum.TargetFriendlies) == IFFEnum.TargetFriendlies;
+            Settings.TargetNeutralsState = (Definition.Targeting.DefaultIff & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
+            Settings.TargetUnownedState = (Definition.Targeting.DefaultIff & IFFEnum.TargetNeutrals) == IFFEnum.TargetNeutrals;
 
             Settings.LockedNetworking = false;
         }
@@ -56,7 +56,7 @@ namespace Orrery.HeartModule.Server.Weapons
             if (!SorterWep.IsWorking) // Don't turn if the turret is disabled
                 return;
 
-            Targeting.UpdateTargeting();
+            Targeting.UpdateTargeting(1/60d);
             base.UpdateAfterSimulation();
         }
     }

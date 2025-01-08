@@ -16,6 +16,10 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         public readonly SorterSmartLogic Weapon;
         public ITargetable Target { get; internal set; }
         public readonly GridTargeting.GridTargeting GridTargeting;
+        /// <summary>
+        /// Amount of time (seconds) the current target has been selected for.
+        /// </summary>
+        private double _targetAge = 0;
 
         public SmartWeaponTargeting(SorterSmartLogic weapon)
         {
@@ -24,12 +28,14 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
             GridTargeting = GridTargetingManager.GetGridTargeting(Weapon.SorterWep.CubeGrid);
         }
 
-        public virtual void UpdateTargeting()
+        public virtual void UpdateTargeting(double delta)
         {
+            _targetAge += delta;
             TargetPosition = GetTargetPosition(Target);
             var prevTarget = Target;
             if (TrySelectTarget())
             {
+                _targetAge = 0;
                 GridTargeting.UpdateWeaponTarget(prevTarget, false);
                 GridTargeting.UpdateWeaponTarget(Target, true);
                 TargetPosition = GetTargetPosition(Target);
@@ -42,7 +48,8 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         public void ForceSetTarget(ITargetable target)
         {
             Target = target;
-            UpdateTargeting();
+            _targetAge = 0;
+            UpdateTargeting(0);
         }
 
         #region Target Interface
@@ -54,7 +61,7 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
         internal virtual bool TrySelectTarget()
         {
             // Prefer original target.
-            bool isPrevTargetable = IsSelectionTargetable(Target) && IsRelationTargetable(Target);
+            bool isPrevTargetable = !(Weapon.Definition.Targeting.RetargetTime > 0 && _targetAge >= Weapon.Definition.Targeting.RetargetTime) && IsSelectionTargetable(Target) && IsRelationTargetable(Target);
             if (!(Target?.IsClosed ?? true) && isPrevTargetable)
                 return false;
 

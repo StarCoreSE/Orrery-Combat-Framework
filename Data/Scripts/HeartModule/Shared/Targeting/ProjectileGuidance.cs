@@ -116,9 +116,6 @@ namespace Orrery.HeartModule.Shared.Targeting
         /// <summary>
         /// Steps the projectile towards a specified direction, with an optional PID.
         /// </summary>
-        /// <param name="targetDir">Normalized target direction.</param>
-        /// <param name="maxTurnRate">Maximum turn rate in radians.</param>
-        /// <param name="maxGs">Maximum 'pull' of the missile, in Gs.</param>
         /// <param name="delta">Delta time, in seconds.</param>
         private void StepDirection(double delta)
         {

@@ -1,6 +1,7 @@
 ﻿using ProtoBuf;
 using Sandbox.Game.Entities;
 using System;
+// ReSharper disable UnassignedField.Global
 
 namespace Orrery.HeartModule.Shared.Definitions
 {
@@ -36,12 +37,12 @@ namespace Orrery.HeartModule.Shared.Definitions
         /// Can the turret fire by itself? Tracks regardless.
         /// </summary>
         [ProtoMember(3)] public bool CanAutoShoot;
-        [ProtoMember(4)] public IFFEnum DefaultIFF;
+        [ProtoMember(4)] public IFFEnum DefaultIff;
         [ProtoMember(5)] public TargetTypeEnum AllowedTargetTypes;
         /// <summary>
         /// Time until the turret is forced to find a new target
         /// </summary>
-        [ProtoMember(6)] public float RetargetTime; // TODO
+        [ProtoMember(6)] public float RetargetTime;
         [ProtoMember(7)] public float AimTolerance;
     }
 
@@ -120,7 +121,7 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(1)] public string PreShootSound;
         [ProtoMember(2)] public string ShootSound;
         [ProtoMember(3)] public string ReloadSound;
-        [ProtoMember(4)] public string RotationSound; // TODO
+        [ProtoMember(4)] public string RotationSound;
 
         public MySoundPair RotationSoundPair => new MySoundPair(RotationSound);
 
