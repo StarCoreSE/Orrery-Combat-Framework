@@ -2,7 +2,7 @@
 using ProtoBuf;
 using Sandbox.ModAPI;
 
-namespace Orrery.HeartModule.Shared.WeaponSettings
+namespace Orrery.HeartModule.Shared.Weapons.Settings
 {
     [ProtoContract]
     internal class SettingsPacket : PacketBase

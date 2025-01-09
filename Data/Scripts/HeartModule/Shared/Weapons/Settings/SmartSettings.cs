@@ -1,7 +1,7 @@
 ﻿using System;
 using ProtoBuf;
 
-namespace Orrery.HeartModule.Shared.WeaponSettings
+namespace Orrery.HeartModule.Shared.Weapons.Settings
 {
     [ProtoContract]
     [ProtoInclude(92, typeof(TurretSettings))]

@@ -17,6 +17,7 @@ namespace Orrery.HeartModule.Client.Weapons
         private static WeaponManager _;
 
         private Dictionary<long, SorterWeaponLogic> _weapons = new Dictionary<long, SorterWeaponLogic>();
+        private HashSet<SorterWeaponLogic> _newWeapons = new HashSet<SorterWeaponLogic>();
 
         public WeaponManager()
         {
@@ -36,6 +37,13 @@ namespace Orrery.HeartModule.Client.Weapons
             HeartLog.Info("Client WeaponManager closed.");
         }
 
+        public void UpdateBeforeSimulation()
+        {
+            foreach (var weapon in _newWeapons)
+                weapon.UpdateOnceBeforeFrame();
+            _newWeapons.Clear();
+        }
+
         #region Blocks
 
         private void AddWeapon(IMyConveyorSorter sorter, WeaponDefinitionBase definition)
@@ -52,6 +60,7 @@ namespace Orrery.HeartModule.Client.Weapons
             else
                 logic = new SorterWeaponLogic(sorter, definition, sorter.EntityId);
 
+            _newWeapons.Add(logic);
             _weapons.Add(logic.Id, logic);
         }
 

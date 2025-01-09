@@ -1,7 +1,7 @@
 ﻿using System;
 using ProtoBuf;
 
-namespace Orrery.HeartModule.Shared.WeaponSettings
+namespace Orrery.HeartModule.Shared.Weapons.Settings
 {
     [ProtoContract]
     internal class TurretSettings : SmartSettings
@@ -21,7 +21,7 @@ namespace Orrery.HeartModule.Shared.WeaponSettings
             }
             set
             {
-                _aiRange = (ushort) value;
+                _aiRange = (ushort)value;
                 Sync();
             }
         }

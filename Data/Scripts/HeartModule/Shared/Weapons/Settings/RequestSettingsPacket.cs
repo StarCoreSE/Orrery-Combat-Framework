@@ -3,7 +3,7 @@ using Orrery.HeartModule.Shared.Networking;
 using ProtoBuf;
 using Sandbox.ModAPI;
 
-namespace Orrery.HeartModule.Shared.WeaponSettings
+namespace Orrery.HeartModule.Shared.Weapons.Settings
 {
     [ProtoContract]
     internal class RequestSettingsPacket : PacketBase

@@ -1,6 +1,6 @@
 ﻿using Orrery.HeartModule.Server.Weapons.Targeting;
 using Orrery.HeartModule.Shared.Definitions;
-using Orrery.HeartModule.Shared.WeaponSettings;
+using Orrery.HeartModule.Shared.Weapons.Settings;
 using Sandbox.ModAPI;
 
 namespace Orrery.HeartModule.Server.Weapons

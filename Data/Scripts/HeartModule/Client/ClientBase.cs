@@ -10,7 +10,7 @@ using VRage.Game.Components;
 
 namespace Orrery.HeartModule.Client
 {
-    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
+    [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation | MyUpdateOrder.BeforeSimulation)]
     internal class ClientBase : MySessionComponentBase
     {
         private ClientNetwork _network = new ClientNetwork();
@@ -58,6 +58,21 @@ namespace Orrery.HeartModule.Client
 
                 _network.Update();
                 _projectileManager.Update();
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ClientBase));
+            }
+        }
+
+        public override void UpdateBeforeSimulation()
+        {
+            if (MyAPIGateway.Utilities.IsDedicated)
+                return;
+
+            try
+            {
+                _weaponManager.UpdateBeforeSimulation();
             }
             catch (Exception ex)
             {

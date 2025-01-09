@@ -8,6 +8,7 @@ using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game;
 using VRage.Game;
 using VRage.Game.Entity;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
@@ -135,7 +136,19 @@ namespace Orrery.HeartModule.Client.Projectiles
             ProjectileMatrix.Up = Vector3D.Cross(Direction, ProjectileMatrix.Right);
 
             if (MaxBeamLength > 0 && Definition.VisualDef.HasTrail && !HeartData.I.IsPaused)
+            {
+                IHitInfo hitInfo;
+                if (MyAPIGateway.Physics.CastLongRay(Position, Position + Direction * MaxBeamLength, out hitInfo,
+                        false))
+                {
+                    DrawImpactParticle(hitInfo.Position, hitInfo.Normal);
+                    PlayImpactAudio(hitInfo.Position);
+                    MaxBeamLength *= hitInfo.Fraction;
+                }
+                
                 GlobalEffects.AddLine(Position, Position + Direction * MaxBeamLength, Definition.VisualDef.TrailFadeTime, Definition.VisualDef.TrailWidth, Definition.VisualDef.TrailColor, Definition.VisualDef.TrailTexture);
+                MaxBeamLength = Definition.PhysicalProjectileDef.MaxTrajectory;
+            }
 
             if (Definition.VisualDef.HasAttachedParticle && !HeartData.I.IsPaused)
             {

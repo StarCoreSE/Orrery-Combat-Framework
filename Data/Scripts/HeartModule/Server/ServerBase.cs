@@ -66,6 +66,7 @@ namespace Orrery.HeartModule.Server
         {
             try
             {
+                _weaponManager.UpdateBeforeSimulation();
                 _projectileManager.UpdateBeforeSimulation();
             }
             catch (Exception ex)

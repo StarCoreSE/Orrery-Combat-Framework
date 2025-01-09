@@ -1,11 +1,12 @@
-﻿using Orrery.HeartModule.Shared.Definitions;
+﻿using System;
+using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
-using Orrery.HeartModule.Shared.WeaponSettings;
 using Sandbox.ModAPI;
 using Orrery.HeartModule.Server.Weapons.Targeting;
 using VRage.Game.Entity;
 using VRageMath;
 using Orrery.HeartModule.Shared.Utility;
+using Orrery.HeartModule.Shared.Weapons.Settings;
 
 namespace Orrery.HeartModule.Server.Weapons
 {
@@ -55,31 +56,6 @@ namespace Orrery.HeartModule.Server.Weapons
         }
 
         #region Subparts
-
-        public override MatrixD CalcMuzzleMatrix(int id, bool local = false)
-        {
-            if (Definition.Assignments.Muzzles.Length == 0 || !MuzzleDummies.ContainsKey(Definition.Assignments.Muzzles[id]))
-                return SorterWep.WorldMatrix;
-
-            try
-            {
-                MyEntitySubpart azSubpart = SubpartManager.GetSubpart((MyEntity)SorterWep, Definition.Assignments.AzimuthSubpart);
-                MyEntitySubpart evSubpart = SubpartManager.GetSubpart(azSubpart, Definition.Assignments.ElevationSubpart);
-
-                MatrixD partMatrix = evSubpart.WorldMatrix;
-                Matrix muzzleMatrix = MuzzleDummies[Definition.Assignments.Muzzles[id]].Matrix;
-
-                if (local)
-                {
-                    return muzzleMatrix * evSubpart.PositionComp.LocalMatrixRef * azSubpart.PositionComp.LocalMatrixRef;
-                }
-
-                if (muzzleMatrix != null)
-                    return muzzleMatrix * partMatrix;
-            }
-            catch { }
-            return MatrixD.Identity;
-        }
 
         public void UpdateTurretSubparts(float delta = 1/60f)
         {
