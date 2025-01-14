@@ -93,7 +93,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
             float modifiedRateOfFire = Definition.Loading.RateOfFire;
             if (Definition.Loading.RateOfFireVariance > 0)
-                modifiedRateOfFire += (float) (Definition.Loading.RateOfFireVariance * (HeartData.I.Random.NextDouble() - 0.5) * 2);
+                modifiedRateOfFire += Definition.Loading.RateOfFire * (float) (Definition.Loading.RateOfFireVariance * (HeartData.I.Random.NextDouble() - 0.5) * 2);
 
             if (lastShoot < 60)
                 lastShoot += modifiedRateOfFire; // Use the modified rate of fire

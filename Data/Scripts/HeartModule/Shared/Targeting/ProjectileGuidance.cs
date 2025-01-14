@@ -60,7 +60,7 @@ namespace Orrery.HeartModule.Shared.Targeting
 
         public void Update(double delta)
         {
-            if (delta == 0)
+            if (delta == 0 || !Projectile.IsActive)
                 return;
 
             _age += delta;
