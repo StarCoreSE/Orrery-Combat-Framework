@@ -37,7 +37,7 @@ namespace Orrery.HeartModule.Shared.Targeting
                 throw new Exception("No projectile guidance defined!");
 
             _stages = new Queue<GuidanceDef>(Projectile.Definition.Guidance);
-            _velocity = Projectile.Definition.PhysicalProjectileDef.Velocity;
+            _velocity = Projectile.Definition.PhysicalProjectileDef.Velocity; // TODO: Figure out how to get the random velocity in here. Does it matter?
         }
 
         public ProjectileGuidance(IPhysicalProjectile projectile, ITargetable target) : this(projectile)
