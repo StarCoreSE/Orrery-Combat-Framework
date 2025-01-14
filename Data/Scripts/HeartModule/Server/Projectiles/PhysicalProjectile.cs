@@ -58,7 +58,7 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
 
             // It's okay to use a random directly here because the projectile is synced to the client afterward.
-            Velocity = direction * Definition.PhysicalProjectileDef.Velocity * (HeartData.I.Random.NextDouble() * Definition.PhysicalProjectileDef.VelocityVariance) + InheritedVelocity;
+            Velocity = direction * Definition.PhysicalProjectileDef.Velocity * ((HeartData.I.Random.NextDouble() - 0.5) * 2 * Definition.PhysicalProjectileDef.VelocityVariance) + InheritedVelocity;
 
             if (Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);

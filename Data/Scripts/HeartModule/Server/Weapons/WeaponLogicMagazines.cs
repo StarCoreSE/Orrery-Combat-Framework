@@ -72,11 +72,6 @@ namespace Orrery.HeartModule.Server.Weapons
                         RemainingReloads--;
                         NextReloadTime = Definition.ReloadTime;
                         ShotsInMag += ShotsPerMag;
-
-                        if (!string.IsNullOrEmpty(DefinitionAudio.ReloadSound))
-                        {
-                            MyVisualScriptLogicProvider.PlaySingleSoundAtPosition(DefinitionAudio.ReloadSound, Vector3D.Zero); // Assuming Vector3D.Zero as placeholder
-                        }
                     }
                     else
                     {
@@ -90,6 +85,11 @@ namespace Orrery.HeartModule.Server.Weapons
                     // Notify when MagazineItemToConsume is not specified
                     // TODO: Note in debug log
                     //MyVisualScriptLogicProvider.ShowNotification("MagazineItemToConsume not specified, proceeding with default reload behavior.", 1000 / 60, "Blue");
+                }
+
+                if (!string.IsNullOrEmpty(DefinitionAudio.ReloadSound))
+                {
+                    MyVisualScriptLogicProvider.PlaySingleSoundAtPosition(DefinitionAudio.ReloadSound, _weapon.SorterWep.Position); // TODO move this clientside.
                 }
 
                 MagazinesLoaded++;

@@ -1,6 +1,8 @@
 ﻿using ProtoBuf;
 using Sandbox.Game.Entities;
 using System;
+using System.Linq;
+
 // ReSharper disable UnassignedField.Global
 
 namespace Orrery.HeartModule.Shared.Definitions
@@ -20,6 +22,9 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(5)] public Loading Loading;
         [ProtoMember(6)] public Audio Audio;
         [ProtoMember(7)] public Visuals Visuals;
+
+        public bool IsTurret => Assignments.HasAzimuth && Assignments.HasElevation;
+        public bool IsSmart => IsTurret || Loading.Ammos.Any(ammo => DefinitionManager.ProjectileDefinitions[ammo].Guidance.Length > 0);
     }
 
     [ProtoContract]
@@ -60,7 +65,6 @@ namespace Orrery.HeartModule.Shared.Definitions
         public bool HasElevation => !ElevationSubpart?.Equals("") ?? false;
         public bool HasAzimuth => !AzimuthSubpart?.Equals("") ?? false;
         public bool HasMuzzleSubpart => !MuzzleSubpart?.Equals("") ?? false;
-        public bool IsTurret => HasAzimuth && HasElevation;
     }
 
     [ProtoContract]
