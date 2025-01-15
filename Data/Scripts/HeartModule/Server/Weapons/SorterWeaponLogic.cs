@@ -176,7 +176,6 @@ namespace Orrery.HeartModule.Server.Weapons
                 SorterWep.Storage = new MyModStorageComponent();
 
             SorterWep.Storage.SetValue(HeartData.I.HeartSettingsGUID, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Settings)));
-            HeartLog.Info("Save " + Settings.ToString());
         }
 
         internal virtual void LoadDefaultSettings()

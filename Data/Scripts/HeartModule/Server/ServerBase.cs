@@ -64,6 +64,9 @@ namespace Orrery.HeartModule.Server
 
         public override void UpdateBeforeSimulation()
         {
+            if (!MyAPIGateway.Session.IsServer)
+                return;
+
             try
             {
                 _weaponManager.UpdateBeforeSimulation();
