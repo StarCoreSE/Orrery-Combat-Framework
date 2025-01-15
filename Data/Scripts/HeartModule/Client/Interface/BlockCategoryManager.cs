@@ -8,16 +8,26 @@ namespace Orrery.HeartModule.Client.Interface
 {
     public static class BlockCategoryManager
     {
-        private static GuiBlockCategoryHelper _orreryBlockCategory;
+        private static GuiBlockCategoryHelper _orreryBlockCategory = null;
+        private static List<string> _bufferBlockSubtypes = new List<string>(); // DefinitionManager can load before the BlockCategoryManager on client and cause an exception.
 
         public static void Init()
         {
             _orreryBlockCategory = new GuiBlockCategoryHelper("[Orrery Combat Framework]", "OrreryBlockCategory");
+            foreach (var item in _bufferBlockSubtypes)
+                _orreryBlockCategory.AddBlock(item);
+            _bufferBlockSubtypes.Clear();
             HeartLog.Info("BlockCategoryManager initialized.");
         }
 
         public static void RegisterFromDefinition(WeaponDefinitionBase definition)
         {
+            if (_orreryBlockCategory == null)
+            {
+                _bufferBlockSubtypes.Add(definition.Assignments.BlockSubtype);
+                return;
+            }
+
             _orreryBlockCategory.AddBlock(definition.Assignments.BlockSubtype);
         }
 

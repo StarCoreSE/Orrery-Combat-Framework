@@ -82,13 +82,13 @@ namespace Orrery.HeartModule.Shared.Definitions
             {
                 case 0:
                     WeaponDefinitions[definitionId] = DefinitionApi.GetDefinition<WeaponDefinitionBase>(definitionId);
-                    HeartLog.Info("Registered new weapon definition " + definitionId);
                     if (!MyAPIGateway.Utilities.IsDedicated)
                         Client.Interface.BlockCategoryManager.RegisterFromDefinition(WeaponDefinitions[definitionId]);
+                    HeartLog.Info("[DefinitionManager] Registered new weapon definition " + definitionId);
                     break;
                 case 1:
                     WeaponDefinitions.Remove(definitionId); // TODO cleanup existing turrets/projectiles
-                    HeartLog.Info("Unregistered weapon definition " + definitionId);
+                    HeartLog.Info("[DefinitionManager] Unregistered weapon definition " + definitionId);
                     break;
                 case 2:
                     // TODO tie into definitions
@@ -106,11 +106,11 @@ namespace Orrery.HeartModule.Shared.Definitions
                     ProjectileDefinitions[definitionId] = DefinitionApi.GetDefinition<ProjectileDefinitionBase>(definitionId);
                     ProjectileDefinitionIds[MaxDefinitionId++] = definitionId;
 
-                    HeartLog.Info($"Registered new projectile definition {definitionId} (internal ID {MaxDefinitionId})");
+                    HeartLog.Info($"[DefinitionManager] Registered new projectile definition {definitionId} (internal ID {MaxDefinitionId})");
                     break;
                 case 1:
                     ProjectileDefinitions.Remove(definitionId); // TODO cleanup existing turrets/projectiles
-                    HeartLog.Info($"Unregistered projectile definition {definitionId} (internal ID {MaxDefinitionId})");
+                    HeartLog.Info($"[DefinitionManager] Unregistered projectile definition {definitionId} (internal ID {MaxDefinitionId})");
                     break;
                 case 2:
                     // TODO tie into definitions

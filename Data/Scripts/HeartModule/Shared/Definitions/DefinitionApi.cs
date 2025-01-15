@@ -3,6 +3,7 @@ using System;
 using VRage.Game.ModAPI;
 using VRage.Utils;
 using System.Collections.Generic;
+using Orrery.HeartModule.Shared.Logging;
 using VRage;
 
 namespace Orrery.HeartModule.Shared.Definitions
@@ -306,6 +307,7 @@ namespace Orrery.HeartModule.Shared.Definitions
             {
                 // We really really want to notify the player if something goes wrong here.
                 MyLog.Default.WriteLineAndConsole($"{_modContext.ModName}: Exception in DefinitionApi! " + ex);
+                HeartLog.Exception(ex, typeof(DefinitionApi));
                 MyAPIGateway.Utilities.ShowMessage(_modContext.ModName, "Exception in DefinitionApi!\n" + ex);
             }
         }
