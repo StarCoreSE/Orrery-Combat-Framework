@@ -16,7 +16,7 @@ using VRageMath;
 
 namespace Orrery.HeartModule.Shared.Weapons
 {
-    public abstract class SorterWeaponBase : MyGameLogicComponent
+    public abstract class SorterWeaponBase : MyGameLogicComponent // TODO: This has no reason to be a GameLogicComponent.
     {
         public readonly long Id;
         public readonly IMyConveyorSorter SorterWep;
