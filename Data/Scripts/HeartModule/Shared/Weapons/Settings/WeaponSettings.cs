@@ -41,7 +41,6 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             }
             set
             {
-                HeartLog.Info("Set AmmoLoadedIdx to " + value + $" (prev {_ammoLoadedIdx})");
                 if (_ammoLoadedIdx == value)
                     return;
 

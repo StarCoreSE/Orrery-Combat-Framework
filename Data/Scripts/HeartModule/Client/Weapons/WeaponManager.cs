@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using VRage.Game.ModAPI;
 using VRage.ModAPI;
+using static VRage.Game.MyObjectBuilder_BehaviorTreeDecoratorNode;
 
 namespace Orrery.HeartModule.Client.Weapons
 {
@@ -23,19 +24,26 @@ namespace Orrery.HeartModule.Client.Weapons
         {
             _ = this;
 
-            DefinitionManager.DefinitionApi.OnReady += () =>
-            {
-                MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
-                MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
-
-                HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
-                MyAPIGateway.Entities.GetEntities(entities);
-                foreach (var entity in entities)
-                    OnEntityAdd(entity);
-            };
+            if (DefinitionManager.DefinitionApi.IsReady)
+                Init();
+            else
+                DefinitionManager.DefinitionApi.OnReady += Init;
 
             HeartLog.Info("Client WeaponManager initialized.");
         }
+
+        private void Init()
+        {
+            MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
+            MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
+
+            HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
+            MyAPIGateway.Entities.GetEntities(entities);
+            foreach (var entity in entities)
+                OnEntityAdd(entity);
+            DefinitionManager.DefinitionApi.OnReady -= Init;
+        }
+
         public void Close()
         {
             MyCubeGrid.OnBlockAddedGlobally -= OnBlockAddedGlobally;

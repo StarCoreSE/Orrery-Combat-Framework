@@ -27,5 +27,3 @@ rmdir "%DS_PATH%" /S /Q
 
 robocopy.exe .\ "%DS_PATH%"  *.* /S /xd .git bin obj .vs ignored /xf *.lnk *.git* *.bat *.zip *.7z *.blend* *.md *.log *.sln *.csproj *.csproj.user *.ruleset modinfo.sbmi
 robocopy.exe "%DS_PATH%" "%CLIENT_PATH%" *.* /S
-
-pause
