@@ -1,6 +1,8 @@
 ﻿using System;
 using Orrery.HeartModule.Client.Networking;
 using Orrery.HeartModule.Server.Networking;
+using Orrery.HeartModule.Server.Weapons;
+using Orrery.HeartModule.Shared.Logging;
 using ProtoBuf;
 using Sandbox.ModAPI;
 using VRageMath;
@@ -39,6 +41,10 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             }
             set
             {
+                HeartLog.Info("Set AmmoLoadedIdx to " + value + $" (prev {_ammoLoadedIdx})");
+                if (_ammoLoadedIdx == value)
+                    return;
+
                 _ammoLoadedIdx = value;
                 Server.Weapons.WeaponManager.GetWeapon(WeaponId)?.Magazine.EmptyMagazines();
                 Sync();
@@ -148,6 +154,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             // Special handling for localhost
             if (MyAPIGateway.Session.IsServer && !MyAPIGateway.Utilities.IsDedicated)
             {
+                WeaponManager.GetWeapon(WeaponId).SaveSettings();
                 ServerNetwork.SendToEveryoneInSync((SettingsPacket)this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
 
                 var weaponClient = Client.Weapons.WeaponManager.GetWeapon(WeaponId);

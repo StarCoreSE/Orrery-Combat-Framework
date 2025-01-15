@@ -8,7 +8,6 @@ using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Server.Projectiles;
 using Orrery.HeartModule.Shared.Utility;
 using Orrery.HeartModule.Shared.Weapons.Settings;
-using Sandbox.Game;
 using VRage.ModAPI;
 using VRageMath;
 using Orrery.HeartModule.Shared.Weapons;
@@ -93,7 +92,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
             float modifiedRateOfFire = Definition.Loading.RateOfFire;
             if (Definition.Loading.RateOfFireVariance > 0)
-                modifiedRateOfFire += (float) (Definition.Loading.RateOfFireVariance * (HeartData.I.Random.NextDouble() - 0.5) * 2);
+                modifiedRateOfFire += Definition.Loading.RateOfFire * (float) (Definition.Loading.RateOfFireVariance * (HeartData.I.Random.NextDouble() - 0.5) * 2);
 
             if (lastShoot < 60)
                 lastShoot += modifiedRateOfFire; // Use the modified rate of fire
@@ -165,7 +164,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
         #region Settings Saving
 
-        void SaveSettings()
+        internal void SaveSettings()
         {
             if (SorterWep == null)
                 return; // called too soon or after it was already closed, ignore
@@ -177,6 +176,7 @@ namespace Orrery.HeartModule.Server.Weapons
                 SorterWep.Storage = new MyModStorageComponent();
 
             SorterWep.Storage.SetValue(HeartData.I.HeartSettingsGUID, Convert.ToBase64String(MyAPIGateway.Utilities.SerializeToBinary(Settings)));
+            HeartLog.Info("Save " + Settings.ToString());
         }
 
         internal virtual void LoadDefaultSettings()
@@ -230,21 +230,6 @@ namespace Orrery.HeartModule.Server.Weapons
             }
 
             return false;
-        }
-
-        public override bool IsSerialized()
-        {
-            try
-            {
-                SaveSettings();
-                //MyAPIGateway.Utilities.ShowNotification("AAAHH I'M SERIALIZING AAAHHHHH", 2000, "Red");
-            }
-            catch (Exception e)
-            {
-                //should probably log this tbqh
-            }
-
-            return base.IsSerialized();
         }
 
         #endregion

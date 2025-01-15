@@ -36,7 +36,6 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         public PhysicalProjectile(ProjectileDefinitionBase definition, Vector3D start, Vector3D direction, IMyEntity owner = null) : base(definition, start, direction, owner)
         {
-            Raycast = new LineD(start, start + direction, Definition.PhysicalProjectileDef.Velocity);
             Health = Definition.PhysicalProjectileDef.Health;
             CollisionSphere = new BoundingSphereD(Position, Definition.PhysicalProjectileDef.ProjectileSize);
 
@@ -58,7 +57,8 @@ namespace Orrery.HeartModule.Server.Projectiles
             }
 
             // It's okay to use a random directly here because the projectile is synced to the client afterward.
-            Velocity = direction * Definition.PhysicalProjectileDef.Velocity * ((HeartData.I.Random.NextDouble() - 0.5) * 2 * Definition.PhysicalProjectileDef.VelocityVariance) + InheritedVelocity;
+            Velocity = direction * Definition.PhysicalProjectileDef.Velocity * (1 + (HeartData.I.Random.NextDouble() - 0.5) * 2 * Definition.PhysicalProjectileDef.VelocityVariance) + InheritedVelocity;
+            Raycast = new LineD(start, start + Velocity/60);
 
             if (Definition.Guidance.Length > 0)
                 Guidance = new ProjectileGuidance(this);
