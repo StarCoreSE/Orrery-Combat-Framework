@@ -26,6 +26,11 @@ namespace Orrery.HeartModule.Client.Weapons
             MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
             MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
 
+            HashSet<IMyEntity> entities = new HashSet<IMyEntity>();
+            MyAPIGateway.Entities.GetEntities(entities);
+            foreach (var entity in entities)
+                OnEntityAdd(entity);
+
             HeartLog.Info("Client WeaponManager initialized.");
         }
         public void Close()
