@@ -45,6 +45,7 @@ namespace Orrery.HeartModule.Server.Networking
                     continue;
 
                 MyAPIGateway.Multiplayer.SendMessageTo(HeartData.ClientNetworkId, MyAPIGateway.Utilities.SerializeToBinary(queuePair.Value.ToArray()), queuePair.Key);
+                queuePair.Value.Clear();
             }
 
             _networkLoadUpdate--;
@@ -65,7 +66,9 @@ namespace Orrery.HeartModule.Server.Networking
                 PacketBase[] packets = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase[]>(serialized);
                 _bufferNetworkLoad += serialized.Length;
                 foreach (var packet in packets)
+                {
                     HandlePacket(packet, senderSteamId);
+                }
             }
             catch (Exception ex)
             {
@@ -132,7 +135,7 @@ namespace Orrery.HeartModule.Server.Networking
         {
             List<ulong> toSend = new List<ulong>();
             foreach (var player in HeartData.I.Players)
-                if (Vector3D.DistanceSquared(player.GetPosition(), position) <= HeartData.I.SyncRangeSq)
+                if (Vector3D.DistanceSquared(player.GetPosition(), position) <= HeartData.I.SyncRangeSq) // TODO: Sync this based on camera position
                     toSend.Add(player.SteamUserId);
 
             if (toSend.Count == 0)

@@ -51,7 +51,8 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             foreach (var deadProjectile in _deadProjectiles)
             {
-                ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);
+                if (!deadProjectile.Definition.PhysicalProjectileDef.IsHitscan) // Hitscans only last one tick.
+                    ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);
                 _projectiles.Remove(deadProjectile);
                 _projectilesWithHealth.Remove(deadProjectile);
             }

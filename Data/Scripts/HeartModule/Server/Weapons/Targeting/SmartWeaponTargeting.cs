@@ -3,10 +3,12 @@ using Orrery.HeartModule.Shared.Targeting;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using System;
 using System.Linq;
+using Orrery.HeartModule.Server.Networking;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 using VRage.Game;
 using VRageMath;
+using Orrery.HeartModule.Shared.Weapons;
 
 namespace Orrery.HeartModule.Server.Weapons.Targeting
 {
@@ -14,7 +16,25 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
     {
         public Vector3D? TargetPosition { get; internal set; }
         public readonly SorterSmartLogic Weapon;
-        public ITargetable Target { get; internal set; }
+
+        private ITargetable _target = null;
+
+        public ITargetable Target
+        {
+            get
+            {
+                return _target;
+            }
+            internal set
+            {
+                if (value == _target)
+                    return;
+                _target = value;
+                ServerNetwork.SendToEveryoneInSync(new SerializedTargetingEvent(this), Weapon.SorterWep.GetPosition());
+            }
+        }
+
+
         public readonly GridTargeting.GridTargeting GridTargeting;
         /// <summary>
         /// Amount of time (seconds) the current target has been selected for.

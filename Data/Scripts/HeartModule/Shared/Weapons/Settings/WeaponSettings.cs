@@ -41,7 +41,6 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             }
             set
             {
-                HeartLog.Info("Set AmmoLoadedIdx to " + value + $" (prev {_ammoLoadedIdx})");
                 if (_ammoLoadedIdx == value)
                     return;
 
@@ -177,10 +176,12 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             if (MyAPIGateway.Session.IsServer)
             {
                 ServerNetwork.SendToEveryoneInSync((SettingsPacket)this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
+                //HeartLog.Info("Sent packet:\n    " + ToString().Replace("\n", "\n    "));
             }
             else
             {
                 ClientNetwork.SendToServer((SettingsPacket)this);
+                //HeartLog.Info("Sent packet:\n    " + ToString().Replace("\n", "\n    "));
             }
         }
 
@@ -189,8 +190,9 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
         /// </summary>
         internal void RequestSync()
         {
-            if (!MyAPIGateway.Session.IsServer)
-                ClientNetwork.SendToServer(new RequestSettingsPacket(WeaponId));
+            if (MyAPIGateway.Session.IsServer)
+                return;
+            ClientNetwork.SendToServer(new RequestSettingsPacket(WeaponId));
         }
 
         #endregion

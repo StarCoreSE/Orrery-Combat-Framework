@@ -23,6 +23,16 @@ namespace Orrery.HeartModule.Client.Weapons
         {
             _ = this;
 
+            if (DefinitionManager.DefinitionApi.IsReady)
+                Init();
+            else
+                DefinitionManager.DefinitionApi.OnReady += Init;
+
+            HeartLog.Info("Client WeaponManager initialized.");
+        }
+
+        private void Init()
+        {
             MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
             MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
 
@@ -30,9 +40,9 @@ namespace Orrery.HeartModule.Client.Weapons
             MyAPIGateway.Entities.GetEntities(entities);
             foreach (var entity in entities)
                 OnEntityAdd(entity);
-
-            HeartLog.Info("Client WeaponManager initialized.");
+            DefinitionManager.DefinitionApi.OnReady -= Init;
         }
+
         public void Close()
         {
             MyCubeGrid.OnBlockAddedGlobally -= OnBlockAddedGlobally;
@@ -95,7 +105,6 @@ namespace Orrery.HeartModule.Client.Weapons
         /// Handling for grids spawning with blocks on them already
         /// </summary>
         /// <param name="obj"></param>
-        /// <exception cref="System.NotImplementedException"></exception>
         private void OnEntityAdd(IMyEntity obj)
         {
             IMyCubeGrid grid = obj as IMyCubeGrid;

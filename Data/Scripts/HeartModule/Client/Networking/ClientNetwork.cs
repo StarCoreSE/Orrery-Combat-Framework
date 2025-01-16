@@ -58,6 +58,7 @@ namespace Orrery.HeartModule.Client.Networking
             if (_packetQueue.Count > 0)
             {
                 MyAPIGateway.Multiplayer.SendMessageToServer(HeartData.ServerNetworkId, MyAPIGateway.Utilities.SerializeToBinary(_packetQueue.ToArray()));
+                //HeartLog.Info("Send packets " + _packetQueue.Count);
                 _packetQueue.Clear();
             }
 
@@ -82,7 +83,10 @@ namespace Orrery.HeartModule.Client.Networking
                 PacketBase[] packets = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase[]>(serialized);
                 _bufferNetworkLoad += serialized.Length;
                 foreach (var packet in packets)
+                {
+                    //HeartLog.Info("Receive packet " + packet.GetType().Name);
                     HandlePacket(packet, senderSteamId);
+                }
             }
             catch (Exception ex)
             {
@@ -109,6 +113,8 @@ namespace Orrery.HeartModule.Client.Networking
                 packet.Received(0);
                 return;
             }
+
+            _packetQueue.Add(packet);
         }
 
         /// <summary>
@@ -128,15 +134,13 @@ namespace Orrery.HeartModule.Client.Networking
                 {
                     I.EstimatedPing = (DateTime.UtcNow.Ticks - I._lastTimeSync) / (double) TimeSpan.TicksPerSecond;
                     I.ServerTimeOffset = ((ReceiveTimestamp - SendTimestamp) - (DateTime.UtcNow.Ticks - I._lastTimeSync)) / (double) TimeSpan.TicksPerSecond;
-                    HeartLog.Debug("Outgoing Timestamp: " + SendTimestamp + "\nIncoming Timestamp: " + ReceiveTimestamp);
-                    HeartLog.Debug("Total ping time (ms): " + I.EstimatedPing);
+                    //HeartLog.Debug("[TimeSync] Outgoing Timestamp: " + SendTimestamp + "\nIncoming Timestamp: " + ReceiveTimestamp);
+                    HeartLog.Debug("[TimeSync] Total ping time (ms): " + I.EstimatedPing);
                 }
-                else
+                else if (MyAPIGateway.Session.IsServer)
                 {
-                    ServerNetwork.SendToPlayer(new TimeSyncPacket
-                    {
-                        ReceiveTimestamp = DateTime.UtcNow.Ticks
-                    }, SenderSteamId);
+                    ReceiveTimestamp = DateTime.UtcNow.Ticks;
+                    ServerNetwork.SendToPlayer(this, SenderSteamId);
                 }
             }
         }
