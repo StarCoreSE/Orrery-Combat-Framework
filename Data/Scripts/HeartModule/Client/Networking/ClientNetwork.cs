@@ -134,8 +134,8 @@ namespace Orrery.HeartModule.Client.Networking
                 {
                     I.EstimatedPing = (DateTime.UtcNow.Ticks - I._lastTimeSync) / (double) TimeSpan.TicksPerSecond;
                     I.ServerTimeOffset = ((ReceiveTimestamp - SendTimestamp) - (DateTime.UtcNow.Ticks - I._lastTimeSync)) / (double) TimeSpan.TicksPerSecond;
-                    //HeartLog.Info("[TimeSync] Outgoing Timestamp: " + SendTimestamp + "\nIncoming Timestamp: " + ReceiveTimestamp);
-                    HeartLog.Info("[TimeSync] Total ping time (ms): " + I.EstimatedPing);
+                    //HeartLog.Debug("[TimeSync] Outgoing Timestamp: " + SendTimestamp + "\nIncoming Timestamp: " + ReceiveTimestamp);
+                    HeartLog.Debug("[TimeSync] Total ping time (ms): " + I.EstimatedPing);
                 }
                 else if (MyAPIGateway.Session.IsServer)
                 {
