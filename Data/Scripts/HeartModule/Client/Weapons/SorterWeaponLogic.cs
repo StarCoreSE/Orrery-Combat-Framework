@@ -12,6 +12,9 @@ namespace Orrery.HeartModule.Client.Weapons
 {
     internal class SorterWeaponLogic : SorterWeaponBase
     {
+        public MatrixD MuzzleMatrix = MatrixD.Identity;
+        public ProjectileDefinitionBase CurrentAmmo => DefinitionManager.ProjectileDefinitions[Definition.Loading.Ammos[Settings.AmmoLoadedIdx]];
+
         public SorterWeaponLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {
             sorterWep.OnClose += OnClose;
@@ -41,6 +44,8 @@ namespace Orrery.HeartModule.Client.Weapons
             {
                 if (MarkedForClose || SorterWep == null)
                     return;
+
+                MuzzleMatrix = CalcMuzzleMatrix(_muzzleIdx);
 
                 // yeah this is a bit stupid but whatever I don't care. if it's an issue will fix.
                 if (!HasInventory)
@@ -72,11 +77,10 @@ namespace Orrery.HeartModule.Client.Weapons
 
             if (Definition.Visuals.HasShootParticle)
             {
-                MatrixD muzzleMatrix = CalcMuzzleMatrix(_muzzleIdx);
-                Vector3D muzzlePos = muzzleMatrix.Translation;
+                Vector3D muzzlePos = MuzzleMatrix.Translation;
 
                 MyParticleEffect hitEffect;
-                if (MyParticlesManager.TryCreateParticleEffect(Definition.Visuals.ShootParticle, ref muzzleMatrix, ref muzzlePos, uint.MaxValue, out hitEffect))
+                if (MyParticlesManager.TryCreateParticleEffect(Definition.Visuals.ShootParticle, ref MuzzleMatrix, ref muzzlePos, uint.MaxValue, out hitEffect))
                 {
                     //MyAPIGateway.Utilities.ShowNotification("Spawned particle at " + hitEffect.WorldMatrix.Translation);
                     //hitEffect.Velocity = SorterWep.CubeGrid.LinearVelocity;
@@ -93,6 +97,7 @@ namespace Orrery.HeartModule.Client.Weapons
             _muzzleIdx++;
             if (_muzzleIdx >= Definition.Assignments.Muzzles.Length)
                 _muzzleIdx = 0;
+            MuzzleMatrix = CalcMuzzleMatrix(_muzzleIdx);
         }
     }
 }

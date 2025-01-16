@@ -13,6 +13,7 @@ namespace Orrery.HeartModule.Shared.Networking
     [ProtoInclude(106, typeof(SettingsPacket))]
     [ProtoInclude(107, typeof(SerializedPrefireEvent))]
     [ProtoInclude(108, typeof(RequestSettingsPacket))]
+    [ProtoInclude(109, typeof(SerializedTargetingEvent))]
     [ProtoContract(UseProtoMembersOnly = true)]
     public abstract class PacketBase
     {
