@@ -27,22 +27,19 @@ namespace Orrery.HeartModule.Client.Projectiles
 
         public void Update()
         {
-            foreach (var projectile in _projectiles.Values)
-            {
-                if (_queuedCloseProjectiles.Contains(projectile.Id))
-                    continue;
-
-                projectile.Update();
-                if (Vector3D.DistanceSquared(projectile.Position, MyAPIGateway.Session.Camera.Position) > HeartData.I.SyncRangeSq)
-                    _queuedCloseProjectiles.Add(projectile.Id);
-            }
-
             foreach (var projectileId in _queuedCloseProjectiles)
             {
                 _projectiles.GetValueOrDefault(projectileId, null)?.OnClose();
                 _projectiles.Remove(projectileId);
             }
             _queuedCloseProjectiles.Clear();
+
+            foreach (var projectile in _projectiles.Values)
+            {
+                projectile.Update();
+                if (projectile.Definition.PhysicalProjectileDef.IsHitscan || Vector3D.DistanceSquared(projectile.Position, MyAPIGateway.Session.Camera.Position) > HeartData.I.SyncRangeSq)
+                    _queuedCloseProjectiles.Add(projectile.Id);
+            }
 
             MyAPIGateway.Utilities.ShowNotification($"Client: {ActiveProjectiles}", 1000/60);
         }

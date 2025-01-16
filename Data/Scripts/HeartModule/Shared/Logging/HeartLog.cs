@@ -45,8 +45,13 @@ namespace Orrery.HeartModule.Shared.Logging
             _?.Close();
             _ = this;
             _writer = MyAPIGateway.Utilities.WriteFileInLocalStorage("debug.log", typeof(HeartLog));
+
+            int utcOffset = (DateTime.Now - DateTime.UtcNow).Hours;
+
             _Log("Log writer opened.");
-            _Log($"Local DateTime: {DateTime.Now:G}");
+            _Log($"Local DateTime: {DateTime.Now:G} (UTC {(utcOffset > 0 ? "+" : "")}{utcOffset:00}:{(DateTime.Now - DateTime.UtcNow).Minutes:00})");
+            _Log($"Server: {MyAPIGateway.Session.IsServer} | Client: {!MyAPIGateway.Utilities.IsDedicated}");
+            _Log( "=================================================");
         }
 
         public void Close()

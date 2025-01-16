@@ -45,6 +45,7 @@ namespace Orrery.HeartModule.Server.Networking
                     continue;
 
                 MyAPIGateway.Multiplayer.SendMessageTo(HeartData.ClientNetworkId, MyAPIGateway.Utilities.SerializeToBinary(queuePair.Value.ToArray()), queuePair.Key);
+                queuePair.Value.Clear();
             }
 
             _networkLoadUpdate--;
@@ -65,7 +66,9 @@ namespace Orrery.HeartModule.Server.Networking
                 PacketBase[] packets = MyAPIGateway.Utilities.SerializeFromBinary<PacketBase[]>(serialized);
                 _bufferNetworkLoad += serialized.Length;
                 foreach (var packet in packets)
+                {
                     HandlePacket(packet, senderSteamId);
+                }
             }
             catch (Exception ex)
             {

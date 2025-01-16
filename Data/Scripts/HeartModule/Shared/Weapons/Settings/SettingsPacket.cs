@@ -1,4 +1,5 @@
-﻿using Orrery.HeartModule.Shared.Networking;
+﻿using Orrery.HeartModule.Shared.Logging;
+using Orrery.HeartModule.Shared.Networking;
 using ProtoBuf;
 using Sandbox.ModAPI;
 
@@ -34,6 +35,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
 
                     weapon.Settings.Sync();
                 }
+                //HeartLog.Info($"Receive packet: {weapon != null}\n    " + ToString().Replace("\n", "\n    "));
             }
             else
             {
@@ -42,6 +44,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
                 {
                     weapon.Settings = _settings;
                 }
+                //HeartLog.Info($"Receive packet: {weapon != null}\n    " + ToString().Replace("\n", "\n    "));
             }
         }
     }

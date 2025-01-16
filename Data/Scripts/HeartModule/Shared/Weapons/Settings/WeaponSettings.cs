@@ -176,10 +176,12 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             if (MyAPIGateway.Session.IsServer)
             {
                 ServerNetwork.SendToEveryoneInSync((SettingsPacket)this, MyAPIGateway.Entities.GetEntityById(WeaponId)?.GetPosition() ?? Vector3D.Zero);
+                //HeartLog.Info("Sent packet:\n    " + ToString().Replace("\n", "\n    "));
             }
             else
             {
                 ClientNetwork.SendToServer((SettingsPacket)this);
+                //HeartLog.Info("Sent packet:\n    " + ToString().Replace("\n", "\n    "));
             }
         }
 

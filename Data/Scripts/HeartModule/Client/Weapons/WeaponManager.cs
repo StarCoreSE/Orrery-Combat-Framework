@@ -106,7 +106,6 @@ namespace Orrery.HeartModule.Client.Weapons
         /// Handling for grids spawning with blocks on them already
         /// </summary>
         /// <param name="obj"></param>
-        /// <exception cref="System.NotImplementedException"></exception>
         private void OnEntityAdd(IMyEntity obj)
         {
             IMyCubeGrid grid = obj as IMyCubeGrid;
