@@ -190,8 +190,9 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
         /// </summary>
         internal void RequestSync()
         {
-            if (!MyAPIGateway.Session.IsServer)
-                ClientNetwork.SendToServer(new RequestSettingsPacket(WeaponId));
+            if (MyAPIGateway.Session.IsServer)
+                return;
+            ClientNetwork.SendToServer(new RequestSettingsPacket(WeaponId));
         }
 
         #endregion

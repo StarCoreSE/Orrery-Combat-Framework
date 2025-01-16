@@ -25,7 +25,6 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             if (!MyAPIGateway.Session.IsServer)
                 return;
             WeaponManager.GetWeapon(WeaponId)?.Settings?.Sync();
-            HeartLog.Info($"Syncing weapon settings {WeaponManager.GetWeapon(WeaponId)?.Settings != null}");
         }
     }
 }

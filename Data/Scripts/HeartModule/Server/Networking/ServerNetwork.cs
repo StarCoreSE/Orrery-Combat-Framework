@@ -135,7 +135,7 @@ namespace Orrery.HeartModule.Server.Networking
         {
             List<ulong> toSend = new List<ulong>();
             foreach (var player in HeartData.I.Players)
-                if (Vector3D.DistanceSquared(player.GetPosition(), position) <= HeartData.I.SyncRangeSq)
+                if (Vector3D.DistanceSquared(player.GetPosition(), position) <= HeartData.I.SyncRangeSq) // TODO: Sync this based on camera position
                     toSend.Add(player.SteamUserId);
 
             if (toSend.Count == 0)
