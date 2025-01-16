@@ -24,9 +24,7 @@ namespace Orrery.HeartModule.Shared.Logging
         /// <param name="message"></param>
         public static void Debug(string message)
         {
-            #if DEBUG
             _?._Log($"[DEBUG] {message}");
-            #endif
         }
 
         /// <summary>
@@ -48,9 +46,11 @@ namespace Orrery.HeartModule.Shared.Logging
 
             int utcOffset = (DateTime.Now - DateTime.UtcNow).Hours;
 
-            _Log("Log writer opened.");
+            _Log($"Log writer opened.");
+            _Log($"OCF v{HeartData.I.Version} | Space Engineers v{MyAPIGateway.Session.Version}");
             _Log($"Local DateTime: {DateTime.Now:G} (UTC {(utcOffset > 0 ? "+" : "")}{utcOffset:00}:{(DateTime.Now - DateTime.UtcNow).Minutes:00})");
             _Log($"Server: {MyAPIGateway.Session.IsServer} | Client: {!MyAPIGateway.Utilities.IsDedicated}");
+            _Log($"Session: {MyAPIGateway.Session.Name} | Client Info: {MyAPIGateway.Multiplayer.MyName}::{MyAPIGateway.Multiplayer.MyId}");
             _Log( "=================================================");
         }
 

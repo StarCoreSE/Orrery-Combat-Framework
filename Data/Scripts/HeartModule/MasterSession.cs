@@ -3,6 +3,7 @@ using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
+using VRage.Utils;
 
 namespace Orrery.HeartModule
 {
@@ -26,6 +27,7 @@ namespace Orrery.HeartModule
             DefinitionManager.LoadData();
 
             HeartLog.Info("[MasterSession] finished LoadData.");
+            MyLog.Default.WriteLineAndConsole("\n========================================\nOrrery Combat Framework initialized - check [\\Storage\\3130655435.sbm_HeartModule\\debug.log] for logs.\n========================================");
         }
 
         public override void UpdateAfterSimulation()
