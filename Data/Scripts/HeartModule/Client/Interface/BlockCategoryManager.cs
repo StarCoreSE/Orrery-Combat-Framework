@@ -13,7 +13,7 @@ namespace Orrery.HeartModule.Client.Interface
 
         public static void Init()
         {
-            _orreryBlockCategory = new GuiBlockCategoryHelper("[Orrery Combat Framework]", "OrreryBlockCategory");
+            _orreryBlockCategory = new GuiBlockCategoryHelper("[Orrery Weapons]", "OrreryBlockCategory");
             foreach (var item in _bufferBlockSubtypes)
                 _orreryBlockCategory.AddBlock(item);
             _bufferBlockSubtypes.Clear();

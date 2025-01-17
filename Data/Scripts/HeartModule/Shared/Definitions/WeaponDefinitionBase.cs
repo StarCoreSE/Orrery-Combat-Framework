@@ -2,6 +2,7 @@
 using Sandbox.Game.Entities;
 using System;
 using System.Linq;
+using Sandbox.ModAPI;
 
 // ReSharper disable UnassignedField.Global
 
@@ -23,6 +24,9 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(6)] public Audio Audio;
         [ProtoMember(7)] public Visuals Visuals;
 
+        public WeaponLiveMethods ServerLiveMethods;
+        public WeaponLiveMethods ClientLiveMethods;
+
         public bool IsTurret => Assignments.HasAzimuth && Assignments.HasElevation;
         public bool IsSmart => IsTurret || Loading.Ammos.Any(ammo => DefinitionManager.ProjectileDefinitions[ammo].Guidance.Length > 0);
     }
@@ -42,12 +46,21 @@ namespace Orrery.HeartModule.Shared.Definitions
         /// Can the turret fire by itself? Tracks regardless.
         /// </summary>
         [ProtoMember(3)] public bool CanAutoShoot;
+        /// <summary>
+        /// Default terminal IFF settings
+        /// </summary>
         [ProtoMember(4)] public IFFEnum DefaultIff;
+        /// <summary>
+        /// Targets this weapon is allowed to fire on.
+        /// </summary>
         [ProtoMember(5)] public TargetTypeEnum AllowedTargetTypes;
         /// <summary>
         /// Time until the turret is forced to find a new target
         /// </summary>
         [ProtoMember(6)] public float RetargetTime;
+        /// <summary>
+        /// Maximum target angle difference in radians for autofiring.
+        /// </summary>
         [ProtoMember(7)] public float AimTolerance;
     }
 
@@ -140,5 +153,13 @@ namespace Orrery.HeartModule.Shared.Definitions
 
         public bool HasShootParticle => !ShootParticle?.Equals("") ?? false;
         public bool HasReloadParticle => !ReloadParticle?.Equals("") ?? false;
+    }
+
+    public struct WeaponLiveMethods
+    {
+        public Action<IMyConveyorSorter, uint> OnShoot;
+        public Action<IMyConveyorSorter, long> OnRetarget;
+        public Action<IMyConveyorSorter, byte> OnReload;
+        public Action<IMyConveyorSorter> OnPlace;
     }
 }
