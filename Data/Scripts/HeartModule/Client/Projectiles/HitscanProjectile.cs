@@ -4,6 +4,7 @@ using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
 using System;
 using Orrery.HeartModule.Client.Networking;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game;
 using VRage.Game;
@@ -156,7 +157,9 @@ namespace Orrery.HeartModule.Client.Projectiles
                 {
                     if (!MyParticlesManager.TryCreateParticleEffect(Definition.VisualDef.AttachedParticle,
                             ref ProjectileMatrix, ref Vector3D.Zero, uint.MaxValue, out ProjectileEffect))
-                        throw new Exception($"Failed to create new projectile particle! Effect: {Definition.VisualDef.AttachedParticle}");
+                    {
+                        //throw new Exception($"Failed to create new projectile particle! Effect: {Definition.VisualDef.AttachedParticle}");
+                    }
                 }
 
                 ProjectileEffect.WorldMatrix = ProjectileMatrix;
@@ -194,7 +197,7 @@ namespace Orrery.HeartModule.Client.Projectiles
             }
             else
             {
-                throw new Exception($"Failed to create new impact particle! RenderId: {uint.MaxValue} Effect: {Definition.VisualDef.ImpactParticle}");
+                //throw new Exception($"Failed to create new impact particle! RenderId: {uint.MaxValue} Effect: {Definition.VisualDef.ImpactParticle}");
             }
         }
 
@@ -224,6 +227,24 @@ namespace Orrery.HeartModule.Client.Projectiles
             {
                 PlayImpactAudio(Position);
                 DrawImpactParticle(Position, Direction);
+
+                try
+                {
+                    Definition.LiveMethods.ClientOnImpact?.Invoke(Id, Position, Direction);
+                }
+                catch (Exception ex)
+                {
+                    HeartLog.Exception(ex, typeof(HitscanProjectile));
+                }
+            }
+
+            try
+            {
+                Definition.LiveMethods.ClientOnEndOfLife?.Invoke(Id);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(HitscanProjectile));
             }
         }
     }

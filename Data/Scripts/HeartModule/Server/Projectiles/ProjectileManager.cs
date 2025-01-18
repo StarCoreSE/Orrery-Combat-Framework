@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
@@ -55,6 +56,15 @@ namespace Orrery.HeartModule.Server.Projectiles
                     ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);
                 _projectiles.Remove(deadProjectile);
                 _projectilesWithHealth.Remove(deadProjectile);
+
+                try
+                {
+                    deadProjectile.Definition.LiveMethods.ServerOnEndOfLife?.Invoke(deadProjectile.Id);
+                }
+                catch (Exception ex)
+                {
+                    HeartLog.Exception(ex, typeof(ProjectileManager));
+                }
             }
 
             _deadProjectiles.Clear();
@@ -70,6 +80,14 @@ namespace Orrery.HeartModule.Server.Projectiles
                 _._projectilesWithHealth.Add(projectile);
 
             ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Position);
+            try
+            {
+                projectile.Definition.LiveMethods.ServerOnSpawn?.Invoke(projectile.Id, projectile.Owner);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ProjectileManager));
+            }
         }
 
         public static HitscanProjectile SpawnProjectile(ProjectileDefinitionBase definition, Vector3D position, Vector3D direction, IMyEntity owner = null)

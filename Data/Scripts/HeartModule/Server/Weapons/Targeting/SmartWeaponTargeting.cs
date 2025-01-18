@@ -4,6 +4,7 @@ using Orrery.HeartModule.Shared.Targeting.Generics;
 using System;
 using System.Linq;
 using Orrery.HeartModule.Server.Networking;
+using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.ModAPI;
 using VRage.Game;
@@ -31,6 +32,15 @@ namespace Orrery.HeartModule.Server.Weapons.Targeting
                     return;
                 _target = value;
                 ServerNetwork.SendToEveryoneInSync(new SerializedTargetingEvent(this), Weapon.SorterWep.GetPosition());
+
+                try
+                {
+                    Weapon.Definition.LiveMethods.ServerOnRetarget?.Invoke(Weapon.SorterWep, (_target as TargetableEntity)?.Entity, (_target as TargetableProjectile)?.Projectile?.Id);
+                }
+                catch (Exception ex)
+                {
+                    HeartLog.Exception(ex, typeof(SmartWeaponTargeting));
+                }
             }
         }
 

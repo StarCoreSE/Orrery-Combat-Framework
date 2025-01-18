@@ -48,6 +48,15 @@ namespace Orrery.HeartModule.Server.Weapons
             {
                 SoftHandle.RaiseException(ex, typeof(SorterWeaponLogic));
             }
+
+            try
+            {
+                Definition.LiveMethods.ServerOnPlace?.Invoke(SorterWep);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(SorterWeaponLogic));
+            }
         }
 
         public override void UpdateAfterSimulation()
@@ -150,6 +159,16 @@ namespace Orrery.HeartModule.Server.Weapons
                     if (this is SorterSmartLogic && newProjectile?.Guidance != null) // Assign target for self-guided projectiles
                     {
                         newProjectile.Guidance.SetTarget(((SorterSmartLogic) this).Targeting.Target);
+                    }
+
+                    try
+                    {
+                        if (newProjectile != null)
+                            Definition.LiveMethods.ServerOnShoot?.Invoke(SorterWep, newProjectile.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        HeartLog.Exception(ex, typeof(SorterWeaponLogic));
                     }
                 }
 

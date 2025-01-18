@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Orrery.HeartModule.Client.Weapons;
 using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
+using VRage.Game.Entity;
 using VRageMath;
 
 namespace Orrery.HeartModule.Client.Projectiles
@@ -60,6 +62,15 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             if (projectile.Owner is IMyConveyorSorter)
                 WeaponManager.GetWeapon(projectile.Owner.EntityId)?.OnShoot();
+
+            try
+            {
+                projectile.Definition.LiveMethods.ClientOnSpawn?.Invoke(projectile.Id, projectile.Owner);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(ProjectileManager));
+            }
         }
 
         public static void NetUpdateProjectile(SerializedSyncProjectile data)

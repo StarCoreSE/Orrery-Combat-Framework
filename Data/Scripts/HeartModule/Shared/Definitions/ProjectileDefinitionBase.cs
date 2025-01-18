@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Utility;
 using ProtoBuf;
 using Sandbox.Game.Entities;
-using VRage.Game.Entity;
+using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
 
@@ -11,10 +12,13 @@ namespace Orrery.HeartModule.Shared.Definitions
     /// <summary>
     /// Standard serializable projectile definition.
     /// </summary>
-    [ProtoContract]
+    [ProtoContract(UseProtoMembersOnly = true)]
     public class ProjectileDefinitionBase
     {
-        public ProjectileDefinitionBase() { }
+        public ProjectileDefinitionBase()
+        {
+            //DefinitionSender.ProjectileDefinitions.Add(this);
+        }
 
         [ProtoMember(1)] public string Name = "";
         [ProtoMember(2)] public UngroupedDef UngroupedDef;
@@ -24,7 +28,8 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(6)] public ProjectileAudioDef AudioDef;
         [ProtoMember(7)] public GuidanceDef[] Guidance = Array.Empty<GuidanceDef>();
         [ProtoMember(8)] public NetworkingDef NetworkingDef;
-        [ProtoIgnore] public LiveMethods LiveMethods = new LiveMethods();
+        
+        public ProjectileLiveMethods LiveMethods = new ProjectileLiveMethods();
     }
 
     [ProtoContract]
@@ -189,12 +194,80 @@ namespace Orrery.HeartModule.Shared.Definitions
     }
 
 
-    public class LiveMethods
+    public class ProjectileLiveMethods
     {
-        public Action<uint, MyEntity> OnSpawn;
-        public Action<uint, Vector3D, Vector3D, MyEntity> OnImpact;
-        public Action<uint> OnEndOfLife;
+        /// <summary>
+        /// Invoked when a projectile is created. Only runs on the server.
+        /// <para>
+        ///     Arguments: ProjectileId, ProjectileOwner
+        /// </para>
+        /// </summary>
+        public Action<uint, IMyEntity> ServerOnSpawn = null;
+        /// <summary>
+        /// Invoked when a projectile hits something. Only runs on the server.
+        /// <para>
+        ///     Arguments: ProjectileId, HitPosition, HitNormal, HitEntity (null for projectiles)
+        /// </para>
+        /// </summary>
+        public Action<uint, Vector3D, Vector3D, IMyEntity> ServerOnImpact = null;
+        /// <summary>
+        /// Invoked when a projectile is closed. Triggered after OnImpact, if applicable. Only runs on the server.
+        /// <para>
+        ///     Arguments: ProjectileId
+        /// </para>
+        /// </summary>
+        public Action<uint> ServerOnEndOfLife = null;
         //public Action<uint, Guidance?> OnGuidanceStage;
+
+        /// <summary>
+        /// Invoked when a projectile is created. Only runs on the client.
+        /// <para>
+        ///     Arguments: ProjectileId, ProjectileOwner
+        /// </para>
+        /// </summary>
+        public Action<uint, IMyEntity> ClientOnSpawn = null;
+        /// <summary>
+        /// Invoked when a projectile hits something. Only runs on the client.
+        /// <para>
+        ///     Arguments: ProjectileId, HitPosition, HitNormal
+        /// </para>
+        /// </summary>
+        public Action<uint, Vector3D, Vector3D> ClientOnImpact = null;
+        /// <summary>
+        /// Invoked when a projectile is closed. Triggered after OnImpact, if applicable. Only runs on the client.
+        /// <para>
+        ///     Arguments: ProjectileId
+        /// </para>
+        /// </summary>
+        public Action<uint> ClientOnEndOfLife = null;
+
+        public static explicit operator Dictionary<string, Delegate>(ProjectileLiveMethods methods)
+        {
+            return new Dictionary<string, Delegate>
+            {
+                ["Server OnSpawn"] = methods.ServerOnSpawn,
+                ["Server OnImpact"] = methods.ServerOnImpact,
+                ["Server OnEndOfLife"] = methods.ServerOnEndOfLife,
+                
+                ["Client OnSpawn"] = methods.ClientOnSpawn,
+                ["Client OnImpact"] = methods.ClientOnImpact,
+                ["Client OnEndOfLife"] = methods.ClientOnEndOfLife,
+            };
+        }
+
+        public static explicit operator ProjectileLiveMethods(Dictionary<string, Delegate> map)
+        {
+            return new ProjectileLiveMethods
+            {
+                ServerOnSpawn = map.GetValueOrDefault("Server OnSpawn", null) as Action<uint, IMyEntity>,
+                ServerOnImpact = map.GetValueOrDefault("Server OnImpact", null) as Action<uint, Vector3D, Vector3D, IMyEntity>,
+                ServerOnEndOfLife = map.GetValueOrDefault("Server OnEndOfLife", null) as Action<uint>,
+
+                ClientOnSpawn = map.GetValueOrDefault("Client OnSpawn", null) as Action<uint, IMyEntity>,
+                ClientOnImpact = map.GetValueOrDefault("Client OnImpact", null) as Action<uint, Vector3D, Vector3D>,
+                ClientOnEndOfLife = map.GetValueOrDefault("Client OnEndOfLife", null) as Action<uint>,
+            };
+        }
     }
 
     [ProtoContract]
