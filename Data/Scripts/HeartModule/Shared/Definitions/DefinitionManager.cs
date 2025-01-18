@@ -123,8 +123,7 @@ namespace Orrery.HeartModule.Shared.Definitions
                         break;
                     ProjectileDefinitions[definitionId].LiveMethods = (ProjectileLiveMethods) DefinitionApi.GetDelegates<ProjectileDefinitionBase>(definitionId);
 
-                    string data = string.Join("\n    ", DefinitionApi.GetDelegates<ProjectileDefinitionBase>(definitionId).Select(a => $"{a.Key}: {a.Value != null}"));
-                    HeartLog.Info($"[DefinitionManager] Updated projectile LiveMethod definition {definitionId}\n    {data}");
+                    HeartLog.Info($"[DefinitionManager] Updated projectile LiveMethod definition {definitionId}");
                     break;
             }
         }
