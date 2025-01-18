@@ -1,10 +1,13 @@
 ﻿using Orrery.HeartModule.Client.Projectiles;
 using Orrery.HeartModule.Client.Weapons;
 using Orrery.HeartModule.Server.Weapons.Targeting;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using ProtoBuf;
+using Sandbox.Definitions;
 using Sandbox.ModAPI;
+using System;
 
 namespace Orrery.HeartModule.Shared.Weapons
 {
@@ -54,6 +57,14 @@ namespace Orrery.HeartModule.Shared.Weapons
             }
 
             weapon.Target = target;
+            try
+            {
+                weapon.Definition.LiveMethods.ClientOnRetarget?.Invoke(weapon.SorterWep, (target as TargetableEntity)?.Entity, (target as TargetableProjectile)?.Projectile?.Id);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(SorterWeaponLogic));
+            }
         }
     }
 }

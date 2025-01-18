@@ -227,9 +227,25 @@ namespace Orrery.HeartModule.Client.Projectiles
             {
                 PlayImpactAudio(Position);
                 DrawImpactParticle(Position, Direction);
-                Definition.LiveMethods.ClientOnImpact?.Invoke(Id, Position, Direction, null); // TODO: Remove impact entity tag
+
+                try
+                {
+                    Definition.LiveMethods.ClientOnImpact?.Invoke(Id, Position, Direction);
+                }
+                catch (Exception ex)
+                {
+                    HeartLog.Exception(ex, typeof(HitscanProjectile));
+                }
             }
-            Definition.LiveMethods.ClientOnEndOfLife?.Invoke(Id);
+
+            try
+            {
+                Definition.LiveMethods.ClientOnEndOfLife?.Invoke(Id);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(HitscanProjectile));
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Logging;
 using Sandbox.Game;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -96,6 +97,15 @@ namespace Orrery.HeartModule.Server.Weapons
                 RemainingReloads--;
                 NextReloadTime = Definition.ReloadTime;
                 ShotsInMag += ShotsPerMag;
+
+                try
+                {
+                    _weapon.Definition.LiveMethods.ServerOnReload?.Invoke(_weapon.SorterWep, SelectedAmmoIndex);
+                }
+                catch (Exception ex)
+                {
+                    HeartLog.Exception(ex, typeof(WeaponLogicMagazines));
+                }
             }
         }
 

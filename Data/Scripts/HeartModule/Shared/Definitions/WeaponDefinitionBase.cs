@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using Sandbox.ModAPI;
 using System.Collections.Generic;
+using VRage.ModAPI;
 
 // ReSharper disable UnassignedField.Global
 namespace Orrery.HeartModule.Shared.Definitions
@@ -159,14 +160,62 @@ namespace Orrery.HeartModule.Shared.Definitions
 
     public class WeaponLiveMethods
     {
+        /// <summary>
+        /// Invoked when a weapon fires. Only runs on the server.
+        /// <para>
+        ///     Arguments: Weapon, NewProjectileId
+        /// </para>
+        /// </summary>
         public Action<IMyConveyorSorter, uint> ServerOnShoot = null;
-        public Action<IMyConveyorSorter, long> ServerOnRetarget = null;
+        /// <summary>
+        /// Invoked when a weapon's target changes. Either TargetEntity or TargetProjectile will have a value. Only runs on the server.
+        /// <para>
+        ///     Arguments: Weapon, TargetEntity (optional), TargetProjectile (optional)
+        /// </para>
+        /// </summary>
+        public Action<IMyConveyorSorter, IMyEntity, uint?> ServerOnRetarget = null;
+        /// <summary>
+        /// Invoked when a weapon reloads. Only runs on the server.
+        /// <para>
+        ///     Arguments: Weapon, AmmoIndex
+        /// </para>
+        /// </summary>
         public Action<IMyConveyorSorter, byte> ServerOnReload = null;
+        /// <summary>
+        /// Invoked when a new weapon is placed. Only runs on the server.
+        /// <para>
+        ///     Arguments: Weapon
+        /// </para>
+        /// </summary>
         public Action<IMyConveyorSorter> ServerOnPlace = null;
 
-        public Action<IMyConveyorSorter, uint> ClientOnShoot = null;
-        public Action<IMyConveyorSorter, long> ClientOnRetarget = null;
-        public Action<IMyConveyorSorter, byte> ClientOnReload = null;
+        /// <summary>
+        /// Invoked when a weapon fires. Only runs on the client.
+        /// <para>
+        ///     Arguments: Weapon, NewProjectileId
+        /// </para>
+        /// </summary>
+        public Action<IMyConveyorSorter> ClientOnShoot = null;
+        /// <summary>
+        /// Invoked when a weapon's target changes. Either TargetEntity or TargetProjectile will have a value. Only runs on the client.
+        /// <para>
+        ///     Arguments: Weapon, TargetEntity (optional), TargetProjectile (optional)
+        /// </para>
+        /// </summary>
+        public Action<IMyConveyorSorter, IMyEntity, uint?> ClientOnRetarget = null;
+        ///// <summary>
+        ///// Invoked when a weapon reloads. Only runs on the client.
+        ///// <para>
+        /////     Arguments: Weapon, AmmoIndex
+        ///// </para>
+        ///// </summary>
+        //public Action<IMyConveyorSorter, byte> ClientOnReload = null;
+        /// <summary>
+        /// Invoked when a new weapon is placed. Only runs on the client.
+        /// <para>
+        ///     Arguments: Weapon
+        /// </para>
+        /// </summary>
         public Action<IMyConveyorSorter> ClientOnPlace = null;
 
         public static explicit operator Dictionary<string, Delegate>(WeaponLiveMethods methods)
@@ -180,7 +229,7 @@ namespace Orrery.HeartModule.Shared.Definitions
                 
                 ["Client OnShoot"] = methods.ClientOnShoot,
                 ["Client OnRetarget"] = methods.ClientOnRetarget,
-                ["Client OnReload"] = methods.ClientOnReload,
+                //["Client OnReload"] = methods.ClientOnReload,
                 ["Client OnPlace"] = methods.ClientOnPlace,
             };
         }
@@ -190,13 +239,13 @@ namespace Orrery.HeartModule.Shared.Definitions
             return new WeaponLiveMethods
             {
                 ServerOnShoot = map.GetValueOrDefault("Server OnShoot", null) as Action<IMyConveyorSorter, uint>,
-                ServerOnRetarget = map.GetValueOrDefault("Server OnRetarget", null) as Action<IMyConveyorSorter, long>,
+                ServerOnRetarget = map.GetValueOrDefault("Server OnRetarget", null) as Action<IMyConveyorSorter, IMyEntity, uint?>,
                 ServerOnReload = map.GetValueOrDefault("Server OnReload", null) as Action<IMyConveyorSorter, byte>,
                 ServerOnPlace = map.GetValueOrDefault("Server OnPlace", null) as Action<IMyConveyorSorter>,
 
-                ClientOnShoot = map.GetValueOrDefault("Client OnShoot", null) as Action<IMyConveyorSorter, uint>,
-                ClientOnRetarget = map.GetValueOrDefault("Client OnRetarget", null) as Action<IMyConveyorSorter, long>,
-                ClientOnReload = map.GetValueOrDefault("Client OnReload", null) as Action<IMyConveyorSorter, byte>,
+                ClientOnShoot = map.GetValueOrDefault("Client OnShoot", null) as Action<IMyConveyorSorter>,
+                ClientOnRetarget = map.GetValueOrDefault("Client OnRetarget", null) as Action<IMyConveyorSorter, IMyEntity, uint?>,
+                //ClientOnReload = map.GetValueOrDefault("Client OnReload", null) as Action<IMyConveyorSorter, byte>,
                 ClientOnPlace = map.GetValueOrDefault("Client OnPlace", null) as Action<IMyConveyorSorter>,
             };
         }

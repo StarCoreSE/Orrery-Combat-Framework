@@ -36,6 +36,15 @@ namespace Orrery.HeartModule.Client.Weapons
             {
                 SoftHandle.RaiseException(ex, typeof(SorterWeaponLogic));
             }
+
+            try
+            {
+                Definition.LiveMethods.ClientOnPlace?.Invoke(SorterWep);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(SorterWeaponLogic));
+            }
         }
 
         public override void UpdateAfterSimulation()
@@ -98,6 +107,15 @@ namespace Orrery.HeartModule.Client.Weapons
             if (_muzzleIdx >= Definition.Assignments.Muzzles.Length)
                 _muzzleIdx = 0;
             MuzzleMatrix = CalcMuzzleMatrix(_muzzleIdx);
+
+            try
+            {
+                Definition.LiveMethods.ClientOnShoot?.Invoke(SorterWep);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(SorterWeaponLogic));
+            }
         }
     }
 }

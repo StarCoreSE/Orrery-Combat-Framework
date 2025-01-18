@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Targeting.Generics;
 using Sandbox.Game.Entities;
@@ -197,8 +198,20 @@ namespace Orrery.HeartModule.Server.Projectiles
                     if (Definition.DamageDef.MaxImpacts <= 0 || HitCount >= Definition.DamageDef.MaxImpacts)
                         IsActive = false;
                 }
+
                 if (firstImpact != null)
+                {
                     CheckAreaDamage(firstImpact.Value, null);
+
+                    try
+                    {
+                        Definition.LiveMethods.ServerOnImpact?.Invoke(Id, Position, Direction, null);
+                    }
+                    catch (Exception ex)
+                    {
+                        HeartLog.Exception(ex, typeof(HitscanProjectile));
+                    }
+                }
             }
 
             #endregion
@@ -229,6 +242,15 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             if (Definition.UngroupedDef.Impulse != 0)
                 hitEntity.Physics?.ApplyImpulse(Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), hitPosition);
+
+            try
+            {
+                Definition.LiveMethods.ServerOnImpact?.Invoke(Id, hitPosition, Direction, hitEntity);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(HitscanProjectile));
+            }
         }
 
         internal virtual void OnImpact(IMyDestroyableObject destroyableObject, float damageModifier = 1)
@@ -240,7 +262,7 @@ namespace Orrery.HeartModule.Server.Projectiles
                 // This can only run on the server, so damage should always be synced.
                 if (Definition.DamageDef.BaseDamage != 0)
                     destroyableObject.DoDamage(Definition.DamageDef.BaseDamage * damageModifier, MyDamageType.Bullet, true, attackerId: Owner?.EntityId ?? 0);
-
+                
                 HitCount++;
             }
             while (Definition.DamageDef.MaxImpacts > 0 && HitCount < Definition.DamageDef.MaxImpacts && destroyableObject.Integrity > 0);
