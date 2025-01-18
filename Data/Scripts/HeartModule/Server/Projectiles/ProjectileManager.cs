@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Orrery.HeartModule.Server.Networking;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
@@ -144,6 +145,20 @@ namespace Orrery.HeartModule.Server.Projectiles
                     )
                     projectiles.Add(projectile);
             }
+        }
+
+        public static bool TryGetProjectile(uint id, out HitscanProjectile projectile)
+        {
+            foreach (var p in _._projectiles)
+            {
+                if (p.Id != id)
+                    continue;
+                projectile = p;
+                return true;
+            }
+
+            projectile = null;
+            return false;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.HeartApi;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
@@ -13,6 +14,7 @@ namespace Orrery.HeartModule
         public static MasterSession I;
         private HeartLog _heartLog;
         private CriticalHandle _criticalHandle;
+        private ApiSender _apiSender = new ApiSender();
         private int _ticks;
 
         public override void LoadData()
@@ -26,6 +28,9 @@ namespace Orrery.HeartModule
             HeartLog.Info("Logging and exception handling initialized.");
 
             DefinitionManager.LoadData();
+
+            _apiSender.LoadData();
+            HeartLog.Info("HeartAPI ready.");
 
             HeartLog.Info("[MasterSession] finished LoadData.");
             MyLog.Default.WriteLineAndConsole("\n========================================\nOrrery Combat Framework initialized - check [\\Storage\\3130655435.sbm_HeartModule\\debug.log] for logs.\n========================================");
@@ -56,6 +61,9 @@ namespace Orrery.HeartModule
         protected override void UnloadData()
         {
             HeartLog.Info("[MasterSession] Begin UnloadData.");
+
+            _apiSender.UnloadData();
+            HeartLog.Info("HeartAPI unloaded.");
 
             DefinitionManager.UnloadData();
 
