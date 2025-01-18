@@ -19,6 +19,7 @@ namespace Orrery.HeartModule.Shared.HeartApi
         public void UnloadData()
         {
             MyAPIGateway.Utilities.UnregisterMessageHandler(HeartApiChannel, RecieveApiMethods);
+            MyAPIGateway.Utilities.SendModMessage(HeartApiChannel, false); // Tell all HeartApi instances to close
         }
 
         /// <summary>

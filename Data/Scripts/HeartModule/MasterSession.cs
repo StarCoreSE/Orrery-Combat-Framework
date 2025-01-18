@@ -5,6 +5,7 @@ using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 using VRage.Game.Components;
 using VRage.Utils;
+using VRageMath;
 
 namespace Orrery.HeartModule
 {

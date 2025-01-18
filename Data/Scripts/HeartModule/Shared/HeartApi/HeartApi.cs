@@ -5,6 +5,7 @@ using Sandbox.ModAPI;
 using VRage;
 using VRage.Game;
 using VRage.Game.Components;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRage.Utils;
 using VRageMath;
@@ -19,7 +20,7 @@ namespace Orrery.HeartModule.Shared.HeartApi
     ///     TODO: Write usage directions.
     /// </para>
     /// </summary>
-    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
+    [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate, int.MaxValue)]
     internal class HeartApi : MySessionComponentBase
     {
         /*
@@ -63,6 +64,7 @@ namespace Orrery.HeartModule.Shared.HeartApi
             IsReady = false;
             Server = null;
             Client = null;
+            Shared = null;
             MyLog.Default.WriteLineAndConsole($"{ModContext.ModName}: HeartAPI unloaded.");
         }
 
@@ -70,6 +72,12 @@ namespace Orrery.HeartModule.Shared.HeartApi
         {
             try
             {
+                if (obj is bool && !(bool)obj) // Receiving 'false' closes the API.
+                {
+                    UnloadData();
+                    return;
+                }
+
                 var message =
                     obj as MyTuple<int, Dictionary<string, Delegate>, Dictionary<string, Delegate>,
                         Dictionary<string, Delegate>>?;
@@ -77,11 +85,11 @@ namespace Orrery.HeartModule.Shared.HeartApi
                     return;
 
                 // Exceptions *will* be thrown if server tries to access client API, and that's okay.
-                Shared = new SharedMethods(message.Value.Item2);
+                Shared = new SharedMethods(ModContext, message.Value.Item2);
                 if (MyAPIGateway.Session.IsServer)
-                    Server = new ServerMethods(message.Value.Item3);
+                    Server = new ServerMethods(ModContext, message.Value.Item3);
                 if (!MyAPIGateway.Utilities.IsDedicated)
-                    Client = new ClientMethods(message.Value.Item4);
+                    Client = new ClientMethods(ModContext, message.Value.Item4);
 
                 if (message.Value.Item1 != ApiVersion)
                     Shared.LogInfo($"HeartApi version ({ApiVersion}) differs from HeartMod version {message.Value.Item1} - issues may occur.");
@@ -98,53 +106,96 @@ namespace Orrery.HeartModule.Shared.HeartApi
         }
 
         /// <summary>
-        /// HeartApi methods available to both the server and client.
+        /// HeartApi methods available to both the server and client. Modders should not access this directly.
         /// </summary>
         public class SharedMethods : ApiMethods
         {
+            #region Logging
+            /// <summary>
+            /// Writes information to the HeartMod's log file.
+            /// </summary>
+            /// <param name="text"></param>
+            public void LogInfo(string text) => _logInfo?.Invoke($"[{ModContext.ModName}] {text}");
+            /// <summary>
+            /// Writes information to the HeartMod's debug log file.
+            /// </summary>
+            /// <param name="text"></param>
+            public void LogDebug(string text) => _logDebug?.Invoke($"[{ModContext.ModName}] {text}");
+            /// <summary>
+            /// Logs an exception to the HeartLog's log file.
+            /// </summary>
+            /// <param name="exception"></param>
+            /// <param name="type">Type where the exception was caught.</param>
+            public void LogException(Exception exception, Type type) => _logException?.Invoke(exception, type);
+            /// <summary>
+            /// Logs an exception to the HeartLog's log file.
+            /// </summary>
+            /// <param name="exception"></param>
+            public void LogException(Exception exception) => _logException?.Invoke(exception, typeof(HeartApi));
+            #endregion
+
+            #region Delegates
             // Logging
-            public readonly Action<string> LogInfo;
-            public readonly Action<string> LogDebug;
-            public readonly Action<Exception, Type> LogException;
+            private readonly Action<string> _logInfo;
+            private readonly Action<string> _logDebug;
+            private readonly Action<Exception, Type> _logException;
 
             // Projectiles
-            public readonly Func<uint, MyTuple<string, Vector3D, Vector3D, IMyEntity>?> ProjectileInfo;
+            private readonly Func<uint, MyTuple<string, Vector3D, Vector3D, IMyEntity>?> _projectileInfo;
+            #endregion
 
-            public SharedMethods(Dictionary<string, Delegate> methodMap) : base(methodMap)
+            internal SharedMethods(IMyModContext modContext, Dictionary<string, Delegate> methodMap) : base(modContext, methodMap)
             {
                 // Logging
-                SetApiMethod("LogInfo", ref LogInfo);
-                SetApiMethod("LogDebug", ref LogDebug);
-                SetApiMethod("LogException", ref LogException);
+                SetApiMethod("LogInfo", ref _logInfo);
+                SetApiMethod("LogDebug", ref _logDebug);
+                SetApiMethod("LogException", ref _logException);
 
                 // Projectiles
-                SetApiMethod("ProjectileInfo", ref ProjectileInfo);
+                SetApiMethod("ProjectileInfo", ref _projectileInfo);
             }
         }
 
+        /// <summary>
+        /// HeartApi methods available to only the server. Modders should not access this directly.
+        /// </summary>
         public class ServerMethods : ApiMethods
         {
-            public readonly Func<string, Vector3D, Vector3D, IMyEntity, uint> ProjectileSpawn;
+            #region Projectiles
 
-            public ServerMethods(Dictionary<string, Delegate> methodMap) : base(methodMap)
+            public uint ProjectileSpawn(string definitionName, Vector3D position, Vector3D direction,
+                IMyEntity owner) => _projectileSpawn?.Invoke(definitionName, position, direction, owner) ?? uint.MaxValue;
+            #endregion
+
+            #region Delegates
+            // Projectiles
+            private readonly Func<string, Vector3D, Vector3D, IMyEntity, uint> _projectileSpawn;
+            #endregion
+
+            internal ServerMethods(IMyModContext modContext, Dictionary<string, Delegate> methodMap) : base(modContext, methodMap)
             {
-                SetApiMethod("ProjectileSpawn", ref ProjectileSpawn);
+                SetApiMethod("ProjectileSpawn", ref _projectileSpawn);
             }
         }
 
+        /// <summary>
+        /// HeartApi methods available to only the client. Modders should not access this directly.
+        /// </summary>
         public class ClientMethods : ApiMethods
         {
-            public ClientMethods(Dictionary<string, Delegate> methodMap) : base(methodMap)
+            internal ClientMethods(IMyModContext modContext, Dictionary<string, Delegate> methodMap) : base(modContext, methodMap)
             {
             }
         }
 
         public abstract class ApiMethods
         {
+            protected readonly IMyModContext ModContext;
             private readonly Dictionary<string, Delegate> _methodMap;
 
-            internal ApiMethods(Dictionary<string, Delegate> methodMap)
+            internal ApiMethods(IMyModContext modContext, Dictionary<string, Delegate> methodMap)
             {
+                ModContext = modContext;
                 _methodMap = methodMap;
             }
 
@@ -155,7 +206,7 @@ namespace Orrery.HeartModule.Shared.HeartApi
             /// <param name="name">Shared endpoint name; matches with the framework mod.</param>
             /// <param name="method">Method to assign.</param>
             /// <exception cref="Exception"></exception>
-            internal void SetApiMethod<T>(string name, ref T method) where T : class
+            protected void SetApiMethod<T>(string name, ref T method) where T : class
             {
                 if (_methodMap == null)
                 {
