@@ -137,9 +137,7 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                 {
                     double closestDistance = double.MaxValue;
-                    LineD testLine = Raycast;
-                    testLine.To -= Direction * 0.5f;
-                    testLine.From += Direction * 0.5f;
+                    LineD testLine = new LineD(Raycast.From - Direction * 0.5f, Raycast.To + Direction * 0.5f);
 
                     foreach (var grid in grids)
                     {
@@ -171,6 +169,15 @@ namespace Orrery.HeartModule.Server.Projectiles
 
                     if (Definition.UngroupedDef.Impulse != 0)
                         closestBlock.CubeGrid.Physics?.ApplyImpulse(Direction * Definition.UngroupedDef.Impulse * (HitCount - prevHitCount), closestIntersect);
+
+                    try
+                    {
+                        Definition.LiveMethods.ServerOnImpact?.Invoke(Id, Position, Direction, closestBlock.CubeGrid);
+                    }
+                    catch (Exception ex)
+                    {
+                        HeartLog.Exception(ex, typeof(HitscanProjectile));
+                    }
                 }
             }
 

@@ -74,7 +74,10 @@ namespace Orrery.HeartModule.Shared.HeartApi
             {
                 if (obj is bool && !(bool)obj) // Receiving 'false' closes the API.
                 {
-                    UnloadData();
+                    IsReady = false;
+                    Server = null;
+                    Client = null;
+                    Shared = null;
                     return;
                 }
 
@@ -110,6 +113,16 @@ namespace Orrery.HeartModule.Shared.HeartApi
         /// </summary>
         public class SharedMethods : ApiMethods
         {
+            #region Utilities
+            public Random Random = new Random();
+
+            public Vector3D RandomCone(Vector3D centerDirection, double radius)
+            {
+                Vector3D axis = Vector3D.CalculatePerpendicularVector(centerDirection).Rotate(centerDirection, Math.PI * 2 * Random.NextDouble());
+                return centerDirection.Rotate(axis, radius * Random.NextDouble());
+            }
+            #endregion
+
             #region Logging
             /// <summary>
             /// Writes information to the HeartMod's log file.

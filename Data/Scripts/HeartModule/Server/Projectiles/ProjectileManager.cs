@@ -7,6 +7,7 @@ using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
+using VRage.Collections;
 using VRage.ModAPI;
 using VRageMath;
 
@@ -18,7 +19,8 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         private readonly HashSet<HitscanProjectile> _projectiles = new HashSet<HitscanProjectile>();
         private readonly HashSet<HitscanProjectile> _projectilesWithHealth = new HashSet<HitscanProjectile>();
-        private readonly HashSet<HitscanProjectile> _deadProjectiles = new HashSet<HitscanProjectile>();
+        private readonly MyConcurrentList<HitscanProjectile> _deadProjectiles = new MyConcurrentList<HitscanProjectile>();
+        private readonly MyConcurrentList<HitscanProjectile> _queuedProjectiles = new MyConcurrentList<HitscanProjectile>();
         private uint _maxProjectileId = 0;
 
         public ProjectileManager()
@@ -33,6 +35,14 @@ namespace Orrery.HeartModule.Server.Projectiles
 
         public void UpdateBeforeSimulation()
         {
+            foreach (var projectile in _queuedProjectiles)
+            {
+                _projectiles.Add(projectile);
+                if (projectile.Definition.PhysicalProjectileDef.Health > 0)
+                    _projectilesWithHealth.Add(projectile);
+            }
+            _queuedProjectiles.Clear();
+
             MyAPIGateway.Parallel.ForEach(_projectiles, projectile =>
             {
                 projectile.UpdateTick(1/60d);
@@ -53,14 +63,14 @@ namespace Orrery.HeartModule.Server.Projectiles
 
             foreach (var deadProjectile in _deadProjectiles)
             {
-                if (!deadProjectile.Definition.PhysicalProjectileDef.IsHitscan) // Hitscans only last one tick.
+                if (deadProjectile != null && !deadProjectile.Definition.PhysicalProjectileDef.IsHitscan) // Hitscans only last one tick.
                     ServerNetwork.SendToEveryoneInSync((SerializedCloseProjectile) deadProjectile, deadProjectile.Position);
                 _projectiles.Remove(deadProjectile);
                 _projectilesWithHealth.Remove(deadProjectile);
 
                 try
                 {
-                    deadProjectile.Definition.LiveMethods.ServerOnEndOfLife?.Invoke(deadProjectile.Id);
+                    deadProjectile?.Definition.LiveMethods.ServerOnEndOfLife?.Invoke(deadProjectile.Id);
                 }
                 catch (Exception ex)
                 {
@@ -75,10 +85,7 @@ namespace Orrery.HeartModule.Server.Projectiles
         {
             if (projectile == null) throw new Exception("Tried spawning null projectile!");
             projectile.Id = _._maxProjectileId++;
-            _._projectiles.Add(projectile);
-
-            if (projectile.Definition.PhysicalProjectileDef.Health > 0)
-                _._projectilesWithHealth.Add(projectile);
+            _._queuedProjectiles.Add(projectile);
 
             ServerNetwork.SendToEveryoneInSync((SerializedSpawnProjectile) projectile, projectile.Position);
             try
