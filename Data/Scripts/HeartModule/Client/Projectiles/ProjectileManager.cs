@@ -4,6 +4,7 @@ using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Networking;
 using Orrery.HeartModule.Shared.Utility;
 using Sandbox.ModAPI;
+using VRage.Game.Entity;
 using VRageMath;
 
 namespace Orrery.HeartModule.Client.Projectiles
@@ -60,6 +61,7 @@ namespace Orrery.HeartModule.Client.Projectiles
 
             if (projectile.Owner is IMyConveyorSorter)
                 WeaponManager.GetWeapon(projectile.Owner.EntityId)?.OnShoot();
+            projectile.Definition.LiveMethods.ClientOnSpawn?.Invoke(projectile.Id, (MyEntity) projectile.Owner); // TODO change type to IMyEntity
         }
 
         public static void NetUpdateProjectile(SerializedSyncProjectile data)

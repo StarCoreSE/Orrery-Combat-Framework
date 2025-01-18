@@ -27,20 +27,7 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(6)] public Audio Audio;
         [ProtoMember(7)] public Visuals Visuals;
 
-        public WeaponLiveMethods ServerLiveMethods = null;
-        public WeaponLiveMethods ClientLiveMethods = null;
-        public Dictionary<string, Delegate> LiveMethods => new Dictionary<string, Delegate>
-        {
-            ["Server OnShoot"] = ServerLiveMethods?.OnShoot,
-            ["Server OnRetarget"] = ServerLiveMethods?.OnRetarget,
-            ["Server OnReload"] = ServerLiveMethods?.OnReload,
-            ["Server OnPlace"] = ServerLiveMethods?.OnPlace,
-
-            ["Client OnShoot"] = ClientLiveMethods?.OnShoot,
-            ["Client OnRetarget"] = ClientLiveMethods?.OnRetarget,
-            ["Client OnReload"] = ClientLiveMethods?.OnReload,
-            ["Client OnPlace"] = ClientLiveMethods?.OnPlace,
-        };
+        public WeaponLiveMethods LiveMethods = new WeaponLiveMethods();
 
         public bool IsTurret => Assignments.HasAzimuth && Assignments.HasElevation;
         public bool IsSmart => IsTurret || Loading.Ammos.Any(ammo => DefinitionManager.ProjectileDefinitions[ammo].Guidance.Length > 0);
@@ -172,9 +159,46 @@ namespace Orrery.HeartModule.Shared.Definitions
 
     public class WeaponLiveMethods
     {
-        public Action<IMyConveyorSorter, uint> OnShoot = null;
-        public Action<IMyConveyorSorter, long> OnRetarget = null;
-        public Action<IMyConveyorSorter, byte> OnReload = null;
-        public Action<IMyConveyorSorter> OnPlace = null;
+        public Action<IMyConveyorSorter, uint> ServerOnShoot = null;
+        public Action<IMyConveyorSorter, long> ServerOnRetarget = null;
+        public Action<IMyConveyorSorter, byte> ServerOnReload = null;
+        public Action<IMyConveyorSorter> ServerOnPlace = null;
+
+        public Action<IMyConveyorSorter, uint> ClientOnShoot = null;
+        public Action<IMyConveyorSorter, long> ClientOnRetarget = null;
+        public Action<IMyConveyorSorter, byte> ClientOnReload = null;
+        public Action<IMyConveyorSorter> ClientOnPlace = null;
+
+        public static explicit operator Dictionary<string, Delegate>(WeaponLiveMethods methods)
+        {
+            return new Dictionary<string, Delegate>
+            {
+                ["Server OnShoot"] = methods.ServerOnShoot,
+                ["Server OnRetarget"] = methods.ServerOnRetarget,
+                ["Server OnReload"] = methods.ServerOnReload,
+                ["Server OnPlace"] = methods.ServerOnPlace,
+                
+                ["Client OnShoot"] = methods.ClientOnShoot,
+                ["Client OnRetarget"] = methods.ClientOnRetarget,
+                ["Client OnReload"] = methods.ClientOnReload,
+                ["Client OnPlace"] = methods.ClientOnPlace,
+            };
+        }
+
+        public static explicit operator WeaponLiveMethods(Dictionary<string, Delegate> map)
+        {
+            return new WeaponLiveMethods
+            {
+                ServerOnShoot = map.GetValueOrDefault("Server OnShoot", null) as Action<IMyConveyorSorter, uint>,
+                ServerOnRetarget = map.GetValueOrDefault("Server OnRetarget", null) as Action<IMyConveyorSorter, long>,
+                ServerOnReload = map.GetValueOrDefault("Server OnReload", null) as Action<IMyConveyorSorter, byte>,
+                ServerOnPlace = map.GetValueOrDefault("Server OnPlace", null) as Action<IMyConveyorSorter>,
+
+                ClientOnShoot = map.GetValueOrDefault("Client OnShoot", null) as Action<IMyConveyorSorter, uint>,
+                ClientOnRetarget = map.GetValueOrDefault("Client OnRetarget", null) as Action<IMyConveyorSorter, long>,
+                ClientOnReload = map.GetValueOrDefault("Client OnReload", null) as Action<IMyConveyorSorter, byte>,
+                ClientOnPlace = map.GetValueOrDefault("Client OnPlace", null) as Action<IMyConveyorSorter>,
+            };
+        }
     }
 }

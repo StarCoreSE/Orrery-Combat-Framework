@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.ModAPI;
 
@@ -84,15 +85,19 @@ namespace Orrery.HeartModule.Shared.Definitions
                     WeaponDefinitions[definitionId] = DefinitionApi.GetDefinition<WeaponDefinitionBase>(definitionId);
                     if (!MyAPIGateway.Utilities.IsDedicated)
                         Client.Interface.BlockCategoryManager.RegisterFromDefinition(WeaponDefinitions[definitionId]);
+
                     HeartLog.Info("[DefinitionManager] Registered new weapon definition " + definitionId);
+                    OnWeaponDefinitionUpdate(definitionId, 2); // Update live methods just in case
                     break;
                 case 1:
                     WeaponDefinitions.Remove(definitionId); // TODO cleanup existing turrets/projectiles
                     HeartLog.Info("[DefinitionManager] Unregistered weapon definition " + definitionId);
                     break;
                 case 2:
-                    // TODO tie into definitions
-                    // var delegates = DefinitionApi.GetDelegates<WeaponDefinitionBase>(definitionId);
+                    if (!WeaponDefinitions.ContainsKey(definitionId))
+                        break;
+                    WeaponDefinitions[definitionId].LiveMethods = (WeaponLiveMethods) DefinitionApi.GetDelegates<WeaponDefinitionBase>(definitionId);
+                    HeartLog.Info($"[DefinitionManager] Updated weapon LiveMethod definition {definitionId}");
                     break;
             }
         }
@@ -107,14 +112,19 @@ namespace Orrery.HeartModule.Shared.Definitions
                     ProjectileDefinitionIds[MaxDefinitionId++] = definitionId;
 
                     HeartLog.Info($"[DefinitionManager] Registered new projectile definition {definitionId} (internal ID {MaxDefinitionId})");
+                    OnProjectileDefinitionUpdate(definitionId, 2); // Update live methods just in case
                     break;
                 case 1:
                     ProjectileDefinitions.Remove(definitionId); // TODO cleanup existing turrets/projectiles
                     HeartLog.Info($"[DefinitionManager] Unregistered projectile definition {definitionId} (internal ID {MaxDefinitionId})");
                     break;
                 case 2:
-                    // TODO tie into definitions
-                    // var delegates = DefinitionApi.GetDelegates<ProjectileDefinitionBase>(definitionId);
+                    if (!ProjectileDefinitions.ContainsKey(definitionId))
+                        break;
+                    ProjectileDefinitions[definitionId].LiveMethods = (ProjectileLiveMethods) DefinitionApi.GetDelegates<ProjectileDefinitionBase>(definitionId);
+
+                    string data = string.Join("\n    ", DefinitionApi.GetDelegates<ProjectileDefinitionBase>(definitionId).Select(a => $"{a.Key}: {a.Value != null}"));
+                    HeartLog.Info($"[DefinitionManager] Updated projectile LiveMethod definition {definitionId}\n    {data}");
                     break;
             }
         }

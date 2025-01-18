@@ -29,18 +29,7 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(7)] public GuidanceDef[] Guidance = Array.Empty<GuidanceDef>();
         [ProtoMember(8)] public NetworkingDef NetworkingDef;
         
-        public ProjectileLiveMethods ServerLiveMethods = null;
-        public ProjectileLiveMethods ClientLiveMethods = null;
-        public Dictionary<string, Delegate> LiveMethods => new Dictionary<string, Delegate>
-        {
-            ["Server OnSpawn"] = ServerLiveMethods?.OnSpawn,
-            ["Server OnImpact"] = ServerLiveMethods?.OnImpact,
-            ["Server OnEndOfLife"] = ServerLiveMethods?.OnEndOfLife,
-
-            ["Client OnSpawn"] = ClientLiveMethods?.OnSpawn,
-            ["Client OnImpact"] = ClientLiveMethods?.OnImpact,
-            ["Client OnEndOfLife"] = ClientLiveMethods?.OnEndOfLife,
-        };
+        public ProjectileLiveMethods LiveMethods = new ProjectileLiveMethods();
     }
 
     [ProtoContract]
@@ -207,10 +196,42 @@ namespace Orrery.HeartModule.Shared.Definitions
 
     public class ProjectileLiveMethods
     {
-        public Action<uint, MyEntity> OnSpawn = null;
-        public Action<uint, Vector3D, Vector3D, MyEntity> OnImpact = null;
-        public Action<uint> OnEndOfLife = null;
+        public Action<uint, MyEntity> ServerOnSpawn = null;
+        public Action<uint, Vector3D, Vector3D, MyEntity> ServerOnImpact = null;
+        public Action<uint> ServerOnEndOfLife = null;
         //public Action<uint, Guidance?> OnGuidanceStage;
+
+        public Action<uint, MyEntity> ClientOnSpawn = null;
+        public Action<uint, Vector3D, Vector3D, MyEntity> ClientOnImpact = null;
+        public Action<uint> ClientOnEndOfLife = null;
+
+        public static explicit operator Dictionary<string, Delegate>(ProjectileLiveMethods methods)
+        {
+            return new Dictionary<string, Delegate>
+            {
+                ["Server OnSpawn"] = methods.ServerOnSpawn,
+                ["Server OnImpact"] = methods.ServerOnImpact,
+                ["Server OnEndOfLife"] = methods.ServerOnEndOfLife,
+                
+                ["Client OnSpawn"] = methods.ClientOnSpawn,
+                ["Client OnImpact"] = methods.ClientOnImpact,
+                ["Client OnEndOfLife"] = methods.ClientOnEndOfLife,
+            };
+        }
+
+        public static explicit operator ProjectileLiveMethods(Dictionary<string, Delegate> map)
+        {
+            return new ProjectileLiveMethods
+            {
+                ServerOnSpawn = map.GetValueOrDefault("Server OnSpawn", null) as Action<uint, MyEntity>,
+                ServerOnImpact = map.GetValueOrDefault("Server OnImpact", null) as Action<uint, Vector3D, Vector3D, MyEntity>,
+                ServerOnEndOfLife = map.GetValueOrDefault("Server OnEndOfLife", null) as Action<uint>,
+
+                ClientOnSpawn = map.GetValueOrDefault("Client OnSpawn", null) as Action<uint, MyEntity>,
+                ClientOnImpact = map.GetValueOrDefault("Client OnImpact", null) as Action<uint, Vector3D, Vector3D, MyEntity>,
+                ClientOnEndOfLife = map.GetValueOrDefault("Client OnEndOfLife", null) as Action<uint>,
+            };
+        }
     }
 
     [ProtoContract]
