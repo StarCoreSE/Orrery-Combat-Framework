@@ -96,5 +96,7 @@ namespace Orrery.HeartModule.Client.Projectiles
         }
 
         public static int ActiveProjectiles => _?._projectiles.Count ?? -1;
+
+        public static bool TryGetProjectile(uint id, out HitscanProjectile projectile) => _._projectiles.TryGetValue(id, out projectile);
     }
 }
