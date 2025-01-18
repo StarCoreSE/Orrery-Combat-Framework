@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Utility;
 using ProtoBuf;
 using Sandbox.Game.Entities;
@@ -11,10 +12,13 @@ namespace Orrery.HeartModule.Shared.Definitions
     /// <summary>
     /// Standard serializable projectile definition.
     /// </summary>
-    [ProtoContract]
+    [ProtoContract(UseProtoMembersOnly = true)]
     public class ProjectileDefinitionBase
     {
-        public ProjectileDefinitionBase() { }
+        public ProjectileDefinitionBase()
+        {
+            //DefinitionSender.ProjectileDefinitions.Add(this);
+        }
 
         [ProtoMember(1)] public string Name = "";
         [ProtoMember(2)] public UngroupedDef UngroupedDef;
@@ -24,7 +28,19 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(6)] public ProjectileAudioDef AudioDef;
         [ProtoMember(7)] public GuidanceDef[] Guidance = Array.Empty<GuidanceDef>();
         [ProtoMember(8)] public NetworkingDef NetworkingDef;
-        [ProtoIgnore] public LiveMethods LiveMethods = new LiveMethods();
+        
+        public ProjectileLiveMethods ServerLiveMethods = null;
+        public ProjectileLiveMethods ClientLiveMethods = null;
+        public Dictionary<string, Delegate> LiveMethods => new Dictionary<string, Delegate>
+        {
+            ["Server OnSpawn"] = ServerLiveMethods?.OnSpawn,
+            ["Server OnImpact"] = ServerLiveMethods?.OnImpact,
+            ["Server OnEndOfLife"] = ServerLiveMethods?.OnEndOfLife,
+
+            ["Client OnSpawn"] = ClientLiveMethods?.OnSpawn,
+            ["Client OnImpact"] = ClientLiveMethods?.OnImpact,
+            ["Client OnEndOfLife"] = ClientLiveMethods?.OnEndOfLife,
+        };
     }
 
     [ProtoContract]
@@ -189,11 +205,11 @@ namespace Orrery.HeartModule.Shared.Definitions
     }
 
 
-    public class LiveMethods
+    public class ProjectileLiveMethods
     {
-        public Action<uint, MyEntity> OnSpawn;
-        public Action<uint, Vector3D, Vector3D, MyEntity> OnImpact;
-        public Action<uint> OnEndOfLife;
+        public Action<uint, MyEntity> OnSpawn = null;
+        public Action<uint, Vector3D, Vector3D, MyEntity> OnImpact = null;
+        public Action<uint> OnEndOfLife = null;
         //public Action<uint, Guidance?> OnGuidanceStage;
     }
 

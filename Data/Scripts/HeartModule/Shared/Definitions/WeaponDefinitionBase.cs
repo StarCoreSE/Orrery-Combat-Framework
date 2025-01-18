@@ -3,18 +3,21 @@ using Sandbox.Game.Entities;
 using System;
 using System.Linq;
 using Sandbox.ModAPI;
+using System.Collections.Generic;
 
 // ReSharper disable UnassignedField.Global
-
 namespace Orrery.HeartModule.Shared.Definitions
 {
     /// <summary>
     /// Standard serializable weapon definition.
     /// </summary>
-    [ProtoContract]
+    [ProtoContract(UseProtoMembersOnly = true)]
     public class WeaponDefinitionBase
     {
-        public WeaponDefinitionBase() { }
+        public WeaponDefinitionBase()
+        {
+            //DefinitionSender.WeaponDefinitions.Add(this);
+        }
 
         [ProtoMember(1)] public string Name;
         [ProtoMember(2)] public Targeting Targeting;
@@ -24,8 +27,20 @@ namespace Orrery.HeartModule.Shared.Definitions
         [ProtoMember(6)] public Audio Audio;
         [ProtoMember(7)] public Visuals Visuals;
 
-        public WeaponLiveMethods ServerLiveMethods;
-        public WeaponLiveMethods ClientLiveMethods;
+        public WeaponLiveMethods ServerLiveMethods = null;
+        public WeaponLiveMethods ClientLiveMethods = null;
+        public Dictionary<string, Delegate> LiveMethods => new Dictionary<string, Delegate>
+        {
+            ["Server OnShoot"] = ServerLiveMethods?.OnShoot,
+            ["Server OnRetarget"] = ServerLiveMethods?.OnRetarget,
+            ["Server OnReload"] = ServerLiveMethods?.OnReload,
+            ["Server OnPlace"] = ServerLiveMethods?.OnPlace,
+
+            ["Client OnShoot"] = ClientLiveMethods?.OnShoot,
+            ["Client OnRetarget"] = ClientLiveMethods?.OnRetarget,
+            ["Client OnReload"] = ClientLiveMethods?.OnReload,
+            ["Client OnPlace"] = ClientLiveMethods?.OnPlace,
+        };
 
         public bool IsTurret => Assignments.HasAzimuth && Assignments.HasElevation;
         public bool IsSmart => IsTurret || Loading.Ammos.Any(ammo => DefinitionManager.ProjectileDefinitions[ammo].Guidance.Length > 0);
@@ -155,11 +170,11 @@ namespace Orrery.HeartModule.Shared.Definitions
         public bool HasReloadParticle => !ReloadParticle?.Equals("") ?? false;
     }
 
-    public struct WeaponLiveMethods
+    public class WeaponLiveMethods
     {
-        public Action<IMyConveyorSorter, uint> OnShoot;
-        public Action<IMyConveyorSorter, long> OnRetarget;
-        public Action<IMyConveyorSorter, byte> OnReload;
-        public Action<IMyConveyorSorter> OnPlace;
+        public Action<IMyConveyorSorter, uint> OnShoot = null;
+        public Action<IMyConveyorSorter, long> OnRetarget = null;
+        public Action<IMyConveyorSorter, byte> OnReload = null;
+        public Action<IMyConveyorSorter> OnPlace = null;
     }
 }
