@@ -86,7 +86,7 @@ namespace Orrery.HeartModule.Shared.Definitions
                     if (!MyAPIGateway.Utilities.IsDedicated)
                         Client.Interface.BlockCategoryManager.RegisterFromDefinition(WeaponDefinitions[definitionId]);
 
-                    HeartLog.Info("[DefinitionManager] Registered new weapon definition " + definitionId);
+                    HeartLog.Info("[DefinitionManager] Registered new weapon definition " + definitionId); // TODO spawn new turrets/projectiles
                     OnWeaponDefinitionUpdate(definitionId, 2); // Update live methods just in case
                     break;
                 case 1:
