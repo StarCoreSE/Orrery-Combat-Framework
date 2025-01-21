@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Orrery.HeartModule.Shared.Definitions;
 using Orrery.HeartModule.Shared.Logging;
@@ -19,17 +20,26 @@ namespace Orrery.HeartModule.Server.Weapons
         private Dictionary<long, SorterWeaponLogic> _weapons = new Dictionary<long, SorterWeaponLogic>();
         private HashSet<SorterWeaponLogic> _newWeapons = new HashSet<SorterWeaponLogic>();
 
+        /// <summary>
+        /// API use only.
+        /// </summary>
+        public static Action<IMyConveyorSorter> OnWeaponAdd, OnWeaponClose;
+
         public WeaponManager()
         {
             _ = this;
 
             MyCubeGrid.OnBlockAddedGlobally += OnBlockAddedGlobally;
             MyAPIGateway.Entities.OnEntityAdd += OnEntityAdd;
+            OnWeaponAdd = null;
+            OnWeaponClose = null;
 
             HeartLog.Info("WeaponManager initialized.");
         }
         public void Close()
         {
+            OnWeaponAdd = null;
+            OnWeaponClose = null;
             MyCubeGrid.OnBlockAddedGlobally -= OnBlockAddedGlobally;
             MyAPIGateway.Entities.OnEntityAdd -= OnEntityAdd;
 
@@ -63,6 +73,14 @@ namespace Orrery.HeartModule.Server.Weapons
             _newWeapons.Add(logic);
             _weapons.Add(logic.Id, logic);
             logic.UpdateOnceBeforeFrame();
+            try
+            {
+                OnWeaponAdd?.Invoke(sorter);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(WeaponManager));
+            }
         }
 
         internal static SorterWeaponLogic GetWeapon(long id)
@@ -72,6 +90,17 @@ namespace Orrery.HeartModule.Server.Weapons
 
         internal static void RemoveWeapon(long id)
         {
+            SorterWeaponLogic wep = null;
+            if (!(_?._weapons.TryGetValue(id, out wep) ?? false))
+                return;
+            try
+            {
+                OnWeaponClose?.Invoke(wep.SorterWep);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(WeaponManager));
+            }
             _?._weapons.Remove(id);
         }
 

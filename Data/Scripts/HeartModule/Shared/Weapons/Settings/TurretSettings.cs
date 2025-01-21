@@ -7,7 +7,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
     internal class TurretSettings : SmartSettings
     {
         [Obsolete("Never use this constructor. It is marked internal for protobuf.", true)]
-        internal TurretSettings() { }
+        protected TurretSettings() { }
 
         public TurretSettings(long weaponId) : base(weaponId)
         {
