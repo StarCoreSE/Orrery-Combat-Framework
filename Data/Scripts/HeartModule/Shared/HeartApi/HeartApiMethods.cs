@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using Orrery.HeartModule.Shared.Logging;
+using Sandbox.ModAPI;
 using VRage;
+using VRage.Game.ModAPI;
 using VRage.ModAPI;
 using VRageMath;
 
@@ -31,7 +33,23 @@ namespace Orrery.HeartModule.Shared.HeartApi
             #endregion
 
             #region Projectiles
-            ["ProjectileInfo"] = new Func<uint, MyTuple<string, Vector3D, Vector3D, IMyEntity>?>(ProjectileInfo)
+            ["ProjectileInfo"] = new Func<uint, MyTuple<string, Vector3D, Vector3D, IMyEntity>?>(ProjectileInfo),
+            #endregion
+
+            #region Weapons
+            ["GetWeaponSettings"] = new Func<IMyConveyorSorter, byte[]>(GetWeaponSettings),
+            ["SetWeaponSettings"] = new Action<IMyConveyorSorter, byte[]>(SetWeaponSettings),
+            ["GetGridWeapons"] = new Func<IMyCubeGrid, IEnumerable<IMyConveyorSorter>>(GetGridWeapons),
+            ["HasWeapon"] = new Func<IMyConveyorSorter, bool>(HasWeapon),
+
+            ["RegisterOnWeaponAdd"] = new Action<Action<IMyConveyorSorter>>(RegisterOnWeaponAdd),
+            ["UnregisterOnWeaponAdd"] = new Action<Action<IMyConveyorSorter>>(UnregisterOnWeaponAdd),
+            ["RegisterOnWeaponClose"] = new Action<Action<IMyConveyorSorter>>(RegisterOnWeaponClose),
+            ["UnregisterOnWeaponClose"] = new Action<Action<IMyConveyorSorter>>(UnregisterOnWeaponClose),
+
+            ["GetWeaponTarget"] = new Func<IMyConveyorSorter, MyTuple<IMyEntity, uint?>?>(GetWeaponTarget),
+            ["GetWeaponAimpoint"] = new Func<IMyConveyorSorter, Vector3D?>(GetWeaponAimpoint),
+            ["GetWeaponBarrelMatrix"] = new Func<IMyConveyorSorter, MatrixD>(GetWeaponBarrelMatrix),
             #endregion
         };
 

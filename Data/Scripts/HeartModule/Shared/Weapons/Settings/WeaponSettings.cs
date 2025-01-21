@@ -14,7 +14,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
     internal class WeaponSettings
     {
         [Obsolete("Never use this constructor. It is marked internal for protobuf.", true)]
-        internal WeaponSettings() { }
+        protected WeaponSettings() { }
 
         public WeaponSettings(long weaponId)
         {

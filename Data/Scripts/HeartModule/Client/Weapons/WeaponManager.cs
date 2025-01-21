@@ -2,6 +2,7 @@
 using Orrery.HeartModule.Shared.Logging;
 using Sandbox.Game.Entities;
 using Sandbox.ModAPI;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using VRage.Game.ModAPI;
@@ -18,6 +19,11 @@ namespace Orrery.HeartModule.Client.Weapons
 
         private Dictionary<long, SorterWeaponLogic> _weapons = new Dictionary<long, SorterWeaponLogic>();
         private HashSet<SorterWeaponLogic> _newWeapons = new HashSet<SorterWeaponLogic>();
+
+        /// <summary>
+        /// API use only.
+        /// </summary>
+        public static Action<IMyConveyorSorter> OnWeaponAdd, OnWeaponClose;
 
         public WeaponManager()
         {
@@ -77,6 +83,14 @@ namespace Orrery.HeartModule.Client.Weapons
 
             _newWeapons.Add(logic);
             _weapons.Add(logic.Id, logic);
+            try
+            {
+                OnWeaponAdd?.Invoke(sorter);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(WeaponManager));
+            }
         }
 
         internal static SorterWeaponLogic GetWeapon(long id)
@@ -86,6 +100,18 @@ namespace Orrery.HeartModule.Client.Weapons
 
         internal static void RemoveWeapon(long id)
         {
+            SorterWeaponLogic wep = null;
+            if (!(_?._weapons.TryGetValue(id, out wep) ?? false))
+                return;
+
+            try
+            {
+                OnWeaponClose?.Invoke(wep.SorterWep);
+            }
+            catch (Exception ex)
+            {
+                HeartLog.Exception(ex, typeof(WeaponManager));
+            }
             _?._weapons.Remove(id);
         }
 
