@@ -9,6 +9,7 @@ namespace Orrery.HeartModule.Client.Weapons
     {
         public new SmartSettings Settings => (SmartSettings)base.Settings;
         internal override WeaponSettings CreateSettings() => new SmartSettings(SorterWep.EntityId);
+        internal override bool IsCompatibleSettings(WeaponSettings s) => s is SmartSettings;
         public ITargetable Target = null;
 
         public SorterSmartLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)

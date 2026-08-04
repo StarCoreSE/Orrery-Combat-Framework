@@ -232,8 +232,24 @@ namespace Orrery.HeartModule.Server.Weapons
 
                 if (loadedSettings != null)
                 {
-                    Settings = loadedSettings;
-                    Settings.WeaponId = Id;
+                    bool missingSubtype = !IsCompatibleSettings(loadedSettings);
+                    ApplySettings(loadedSettings);
+
+                    // Storage/protobuf sometimes returns base WeaponSettings; restore subtype defaults.
+                    if (missingSubtype)
+                    {
+                        var shoot = loadedSettings.ShootState;
+                        var mouse = loadedSettings.MouseShootState;
+                        var hud = loadedSettings.HudBarrelIndicatorState;
+                        var ammo = loadedSettings.AmmoLoadedIdx;
+                        LoadDefaultSettings();
+                        Settings.LockedNetworking = true;
+                        Settings.ShootState = shoot;
+                        Settings.MouseShootState = mouse;
+                        Settings.HudBarrelIndicatorState = hud;
+                        Settings.AmmoLoadedIdx = ammo;
+                        Settings.LockedNetworking = false;
+                    }
 
                     // Handling for when ammo definition is changed
                     if (Settings.AmmoLoadedIdx >= Definition.Loading.Ammos.Length)

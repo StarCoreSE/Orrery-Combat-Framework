@@ -23,6 +23,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
         internal override SmartWeaponTargeting CreateTargeting() => new TurretWeaponTargeting(this);
         internal override WeaponSettings CreateSettings() => new TurretSettings(SorterWep.EntityId);
+        internal override bool IsCompatibleSettings(WeaponSettings s) => s is TurretSettings;
 
         public SorterTurretLogic(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id) : base(sorterWep, definition, id)
         {

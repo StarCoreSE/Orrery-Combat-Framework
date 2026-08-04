@@ -34,6 +34,52 @@ namespace Orrery.HeartModule.Shared.Weapons
         internal WeaponSettings Settings;
         internal virtual WeaponSettings CreateSettings() => new WeaponSettings(SorterWep.EntityId);
 
+        /// <summary>
+        /// True when <paramref name="s"/> is the runtime type this weapon expects
+        /// (or a compatible subtype). Uses <c>is</c> — SE whitelist bans Type.IsAssignableFrom.
+        /// </summary>
+        internal virtual bool IsCompatibleSettings(WeaponSettings s) => s != null;
+
+        /// <summary>
+        /// Assigns settings without demoting SmartSettings/TurretSettings to base WeaponSettings
+        /// (protobuf/storage can deserialize as the base type and hard casts then crash).
+        /// </summary>
+        internal void ApplySettings(WeaponSettings incoming)
+        {
+            if (incoming == null)
+                return;
+
+            if (IsCompatibleSettings(incoming))
+            {
+                Settings = incoming;
+                Settings.WeaponId = Id;
+                return;
+            }
+
+            if (!IsCompatibleSettings(Settings))
+                Settings = CreateSettings();
+
+            bool unlock = !Settings.LockedNetworking;
+            Settings.LockedNetworking = true;
+            Settings.WeaponId = Id;
+            Settings.ShootState = incoming.ShootState;
+            Settings.MouseShootState = incoming.MouseShootState;
+            Settings.HudBarrelIndicatorState = incoming.HudBarrelIndicatorState;
+            Settings.AmmoLoadedIdx = incoming.AmmoLoadedIdx;
+
+            var fromSmart = incoming as SmartSettings;
+            var toSmart = Settings as SmartSettings;
+            if (fromSmart != null && toSmart != null)
+                toSmart.TargetStateContainer = fromSmart.TargetStateContainer;
+
+            var fromTurret = incoming as TurretSettings;
+            var toTurret = Settings as TurretSettings;
+            if (fromTurret != null && toTurret != null)
+                toTurret.AiRange = fromTurret.AiRange;
+
+            if (unlock)
+                Settings.LockedNetworking = false;
+        }
 
         protected SorterWeaponBase(IMyConveyorSorter sorterWep, WeaponDefinitionBase definition, long id)
         {

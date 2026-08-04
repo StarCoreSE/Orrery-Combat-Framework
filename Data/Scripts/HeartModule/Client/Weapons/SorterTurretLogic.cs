@@ -15,6 +15,7 @@ namespace Orrery.HeartModule.Client.Weapons
     {
         public new TurretSettings Settings => (TurretSettings)base.Settings;
         internal override WeaponSettings CreateSettings() => new TurretSettings(SorterWep.EntityId);
+        internal override bool IsCompatibleSettings(WeaponSettings s) => s is TurretSettings;
 
         public float Azimuth { get; internal set; } = 0;
         public float Elevation { get; internal set; } = 0;

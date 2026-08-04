@@ -57,14 +57,14 @@ namespace Orrery.HeartModule.Shared.HeartApi
             {
                 var weapon = Server.Weapons.WeaponManager.GetWeapon(sorterWep.EntityId);
                 if (weapon == null) return;
-                weapon.Settings = settings;
+                weapon.ApplySettings(settings);
                 weapon.Settings.Sync();
             }
             else
             {
                 var weapon = Client.Weapons.WeaponManager.GetWeapon(sorterWep.EntityId);
                 if (weapon == null) return;
-                weapon.Settings = settings;
+                weapon.ApplySettings(settings);
                 weapon.Settings.Sync();
             }
         }

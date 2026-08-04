@@ -29,7 +29,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
                 {
                     bool needsReload = weapon.Settings.AmmoLoadedIdx != _settings.AmmoLoadedIdx;
 
-                    weapon.Settings = _settings;
+                    weapon.ApplySettings(_settings);
                     if (needsReload)
                         weapon.Magazine.EmptyMagazines();
 
@@ -41,9 +41,7 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
             {
                 var weapon = Client.Weapons.WeaponManager.GetWeapon(_settings.WeaponId);
                 if (weapon != null)
-                {
-                    weapon.Settings = _settings;
-                }
+                    weapon.ApplySettings(_settings);
                 //HeartLog.Info($"Receive packet: {weapon != null}\n    " + ToString().Replace("\n", "\n    "));
             }
         }

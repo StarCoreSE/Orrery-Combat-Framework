@@ -1,5 +1,7 @@
-﻿using Orrery.HeartModule.Server.Weapons.Targeting;
+﻿using System;
+using Orrery.HeartModule.Server.Weapons.Targeting;
 using Orrery.HeartModule.Shared.Definitions;
+using Orrery.HeartModule.Shared.Logging;
 using Orrery.HeartModule.Shared.Weapons.Settings;
 using Sandbox.ModAPI;
 
@@ -14,6 +16,7 @@ namespace Orrery.HeartModule.Server.Weapons
 
         internal virtual SmartWeaponTargeting CreateTargeting() => new SmartWeaponTargeting(this);
         internal override WeaponSettings CreateSettings() => new SmartSettings(SorterWep.EntityId);
+        internal override bool IsCompatibleSettings(WeaponSettings s) => s is SmartSettings;
 
         public SmartWeaponTargeting Targeting { get; internal set; }
 
@@ -53,11 +56,18 @@ namespace Orrery.HeartModule.Server.Weapons
 
         public override void UpdateAfterSimulation()
         {
-            if (!SorterWep.IsWorking) // Don't turn if the turret is disabled
-                return;
+            try
+            {
+                if (!SorterWep.IsWorking) // Don't turn if the turret is disabled
+                    return;
 
-            Targeting.UpdateTargeting(1/60d);
-            base.UpdateAfterSimulation();
+                Targeting.UpdateTargeting(1/60d);
+                base.UpdateAfterSimulation();
+            }
+            catch (Exception ex)
+            {
+                SoftHandle.RaiseException(ex, typeof(SorterSmartLogic));
+            }
         }
     }
 }

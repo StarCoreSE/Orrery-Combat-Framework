@@ -158,14 +158,12 @@ namespace Orrery.HeartModule.Shared.Weapons.Settings
 
                 var weaponClient = Client.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponClient != null)
-                {
-                    weaponClient.Settings = this;
-                }
+                    weaponClient.ApplySettings(this);
                 var weaponServer = Server.Weapons.WeaponManager.GetWeapon(WeaponId);
                 if (weaponServer != null)
                 {
                     bool needsReload = weaponServer.Settings.AmmoLoadedIdx != AmmoLoadedIdx;
-                    weaponServer.Settings = this;
+                    weaponServer.ApplySettings(this);
                     if (needsReload)
                         weaponServer.Magazine.EmptyMagazines();
                 }
